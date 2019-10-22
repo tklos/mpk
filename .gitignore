@@ -1,4 +1,10 @@
 
+/manage.py
+/wsgi.py
+
+mpk/settings/secrets_*
+!mpk/settings/secrets_*.template
+
 *.pyc
 __pycache__/
 
