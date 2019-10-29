@@ -1,0 +1,16 @@
+
+
+
+ (1) Download routes and stops data
+     - https://www.wroclaw.pl/open-data/dataset/rozkladjazdytransportupublicznegoplik_data
+       stops.txt from OtwartyWroclaw_rozklad_jazdy_GTFS.zip
+       (version from 23.10.2019 is in mpk/resources/stops.csv)
+     - https://www.wroclaw.pl/open-data/dataset/rozkladjazdytransportupublicznegoxml_data
+       (line).xml from XML-rozkladyjazdy.zip
+
+
+
+
+ (2)
+
+
