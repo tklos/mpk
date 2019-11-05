@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
     'routes',
     'stops',
+    'vehicle_locations',
 ]
 
 MIDDLEWARE = [
@@ -131,4 +132,14 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media/')
+
+
+# Location consts
+# Distance in kilometers between current position and the one one degree east/west or north/south
+ONE_DEG_X_KM =  69.977  # 2 * PI * EARTH_RADIUS * sin(radians(90-lat)) / 360, (EARTH_RADIUS=6371, lat=51)
+ONE_DEG_Y_KM = 111.194  # 2 * PI * EARTH_RADIUS / 360
+
+# Stop distances
+STOP_ADD_RADIUS_M = 15
+MAX_ALLOWED_DETOUR_RATIO = 1.5
 

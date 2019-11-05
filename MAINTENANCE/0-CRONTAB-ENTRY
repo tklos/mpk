@@ -1,0 +1,8 @@
+
+DJANGO_PYTHON_PATH=...
+DJANGO_MANAGE_PATH=...
+
+
+# Get vehicle locations
+* * * * * $DJANGO_PYTHON_PATH $DJANGO_MANAGE_PATH get_locations
+
