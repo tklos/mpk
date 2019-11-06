@@ -148,6 +148,8 @@ class Command(BaseCommand):
         # Routes
         routes = Route.objects.all()
         lines_l = [r.line for r in routes]
+        if not lines_l:
+            raise RuntimeError('No routes')
         routes_d = {r.line: (r, list(r.stop_set.all())) for r in routes}
 
         # Get data
