@@ -1,9 +1,11 @@
 
 /manage.py
 /wsgi.py
+/passenger_wsgi.py
 
-mpk/settings/secrets_*
-!mpk/settings/secrets_*.template
+mpk/settings/*
+!mpk/settings/base.py
+!mpk/settings/*.template
 
 *.pyc
 __pycache__/
