@@ -143,3 +143,34 @@ ONE_DEG_Y_KM = 111.194  # 2 * PI * EARTH_RADIUS / 360
 STOP_ADD_RADIUS_M = 15
 MAX_ALLOWED_DETOUR_RATIO = 1.5
 
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '{asctime} - {levelname} - {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'get-locations-file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': None,
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'simple',
+            'encoding': 'utf8',
+        },
+    },
+    'loggers': {
+        'get-locations': {
+            'handlers': ['get-locations-file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+

@@ -7,3 +7,7 @@ DEBUG =
 ALLOWED_HOSTS = [
 ]
 
+
+# Logging
+LOGGING['handlers']['get-locations-file']['filename'] =
+

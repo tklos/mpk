@@ -1,5 +1,5 @@
+import logging
 from datetime import datetime
-
 import numpy as np
 import pytz
 import requests
@@ -15,6 +15,9 @@ from vehicle_locations.models import VehicleLocation
 LOCATIONS_URL = 'http://pasazer.mpk.wroc.pl/position.php'
 
 
+logger = logging.getLogger('get-locations')
+
+
 def round_or_none(val, num_d):
     return None if val is None else round(val, num_d)
 
@@ -26,7 +29,7 @@ def _is_at_stop(stop, dist):
 def calculate_position_between_stops(stop_a, stop_b, dist_a, dist_b):
     std_stops_dist = distance.distance(stop_a, stop_b)
     this_total_dist = dist_a + dist_b
-    print(std_stops_dist, this_total_dist)
+    logger.debug((std_stops_dist, this_total_dist))
 
     if this_total_dist > std_stops_dist * settings.MAX_ALLOWED_DETOUR_RATIO:
         # We are too far from the planned route
@@ -39,7 +42,7 @@ def calculate_position_between_stops(stop_a, stop_b, dist_a, dist_b):
         dist_limited = dist_a - stop_a.radius_m - settings.STOP_ADD_RADIUS_M
         total_dist_limited = dist_a + dist_b - stop_a.radius_m - stop_b.radius_m - 2 * settings.STOP_ADD_RADIUS_M
         to_next_stop_ratio = dist_limited / total_dist_limited
-        print(to_next_stop_ratio)
+        logger.debug(to_next_stop_ratio)
 
         return {
             'is_processed': True,
@@ -53,14 +56,14 @@ def process_vehicle(el, routes_d, date_created):
     """ Calculates position of element el and saves in the db """
     line, vehicle_id = el['name'], el['k']
     lat, lng = el['x'], el['y']
-    print(lat, lng)
+    logger.debug('Processing {}, {}'.format(lat, lng))
 
     loc = (lat, lng)
     route, stops = routes_d[line]
 
     # Calculate distance
     stop_dist = [distance.distance(loc, stop) for stop in stops]
-    print(stop_dist)
+    logger.debug(stop_dist)
 
     # Find location
     is_at_stop_l = [_is_at_stop(stops[ind], stop_dist[ind]) for ind in range(len(stops))]
@@ -77,7 +80,7 @@ def process_vehicle(el, routes_d, date_created):
         # Vehicle at a stop
         current_stop_ind = next((ind for ind in range(len(is_at_stop_l)) if is_at_stop_l[ind]))
         current_stop = stops[current_stop_ind]
-        print('at stop {} ({:.2f})'.format(current_stop, stop_dist[current_stop_ind]))
+        logger.debug('at stop {} ({:.2f})'.format(current_stop, stop_dist[current_stop_ind]))
         proc_status = {
             'is_processed': True,
             'is_at_stop': True,
@@ -87,7 +90,6 @@ def process_vehicle(el, routes_d, date_created):
     else:
         # Not at stop
         min_ind = np.argmin(stop_dist)
-        print('min', min_ind, stop_dist[min_ind])
         stop1 = stops[min_ind]
 
         if min_ind == 0 or min_ind == len(stops) - 1:
@@ -100,7 +102,7 @@ def process_vehicle(el, routes_d, date_created):
             ind_a, ind_b = min(ind_final, ind_other), max(ind_final, ind_other)
             dist_loc_next, dist_stop_next = distance.distance(loc, stops[ind_other]), distance.distance(stops[ind_final], stops[ind_other])
             if dist_stop_next < dist_loc_next:
-                print('BEYOND')
+                logger.debug('Beyond')
                 proc_status = {
                     'is_processed': False,
                     'unprocessed_reason': const.UNPROC_REASON_BEYOND_FINAL_STOP,
@@ -117,14 +119,14 @@ def process_vehicle(el, routes_d, date_created):
             dist_loc_a, dist_loc_b = distance.distance(loc, stop_a), distance.distance(loc, stop_b)
 
             diff_a, diff_b = dist_loc_a - dist_stop_a, dist_loc_b - dist_stop_b
-            print('DIST ({:.0f} {:.0f} {:.0f}) ({:.0f} {:.0f} {:.0f})'.format(dist_loc_a, dist_stop_a, diff_a, dist_loc_b, dist_stop_b, diff_b))
+            logger.debug('DIST ({:.0f} {:.0f} {:.0f}) ({:.0f} {:.0f} {:.0f})'.format(dist_loc_a, dist_stop_a, diff_a, dist_loc_b, dist_stop_b, diff_b))
             if diff_a < diff_b:
                 # We are closer to stop a
                 min_ind -= 1
 
             proc_status = calculate_position_between_stops(stops[min_ind], stops[min_ind+1], stop_dist[min_ind], stop_dist[min_ind+1])
 
-    print(proc_status)
+    logger.debug(proc_status)
     # Save
     loc = VehicleLocation.objects.create(
         route=route,
@@ -138,8 +140,8 @@ def process_vehicle(el, routes_d, date_created):
         current_stop=proc_status.get('current_stop'),
         to_next_stop_ratio=round_or_none(proc_status.get('to_next_stop_ratio'), 3),
     )
-    print(loc)
-    print('')
+    logger.debug(loc)
+    logger.debug('')
 
 
 class Command(BaseCommand):
@@ -148,6 +150,8 @@ class Command(BaseCommand):
         # Routes
         routes = Route.objects.all()
         lines_l = [r.line for r in routes]
+        if not lines_l:
+            raise RuntimeError('No routes')
         routes_d = {r.line: (r, list(r.stop_set.all())) for r in routes}
 
         # Get data
