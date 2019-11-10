@@ -5,12 +5,10 @@ from datetime import datetime
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pytz
-from django.template.defaultfilters import linebreaksbr
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 
 from routes.models import Route
-from vehicle_locations.models import VehicleLocation
 
 sys.path.insert(0, os.path.dirname(__file__))
 from lib import settings
@@ -26,7 +24,8 @@ def create_plot(line_no, date_from, date_to):
     params = settings.Params()
     out_filename = 'x.png'
 
-    date_from, date_to = datetime(2019, 11, 9, 10, 40).replace(tzinfo=pytz.utc), datetime(2019, 11, 9, 12, 0).replace(tzinfo=pytz.utc)
+    # date_from, date_to = datetime(2019, 11, 9, 10, 40).replace(tzinfo=pytz.utc), datetime(2019, 11, 9, 12, 0).replace(tzinfo=pytz.utc)
+    date_from, date_to = datetime(2019, 11, 10, 21, 44).replace(tzinfo=pytz.utc), datetime(2019, 11, 10, 23, 0).replace(tzinfo=pytz.utc)
 
     # Process stops
     stops = list(route.stop_set.all())
@@ -95,6 +94,10 @@ def create_plot(line_no, date_from, date_to):
 
     gap_line_h = LineCollection(gap_data, colors=gap_data_colours, ls='--')
     canvas_h.add_collection(gap_line_h)
+
+    # Title
+    title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no)
+    full_window_h.text(.5, params.title_top_margin_n, title_str, fontsize=params.title_fontsize, va='top', ha='center')
 
     # Plot figure
     plt.savefig(out_filename, dpi=params.dpi)

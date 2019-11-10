@@ -7,11 +7,11 @@ class Params:
         # Window
         window_size_p = (1350, 955)
         dpi = 96.
-        canvas_margin_p = (195, 30, 70, 80)  # l,r,b,t
+        canvas_margin_p = (195, 30, 70, 55)  # l,r,b,t
 
         # Fontsize
         err_fontsize = 11
-        title_fontsize = 24
+        title_fontsize = 22
         bottom_fontsize = 16
         left_fontsize = 12
 
@@ -19,6 +19,7 @@ class Params:
         stops_margin_p = 10
         max_diff_continuous_data = timedelta(seconds=30)
         line_colours = ['C0', 'C1']
+        title_top_margin_p = 12
 
 
         ## Processing
@@ -32,6 +33,8 @@ class Params:
         canvas_left_edge_n, canvas_right_edge_n = canvas_left_edge_p / window_width_p, canvas_right_edge_p / window_width_p
         canvas_bottom_edge_n, canvas_top_edge_n = canvas_bottom_edge_p / window_height_p, canvas_top_edge_p / window_height_p
         canvas_width_n, canvas_height_n = canvas_right_edge_n - canvas_left_edge_n, canvas_top_edge_n - canvas_bottom_edge_n
+
+        title_top_margin_n = 1. - title_top_margin_p / window_height_p
 
 
         ## Save params
@@ -53,6 +56,7 @@ class Params:
         self.stops_margin_n = stops_margin_p / canvas_height_p
         self.max_diff_continuous_data = max_diff_continuous_data
         self.line_colours = line_colours
+        self.title_top_margin_n = title_top_margin_n
 
 
         ## Check params
