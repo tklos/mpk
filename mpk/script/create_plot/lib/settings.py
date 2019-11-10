@@ -16,6 +16,7 @@ class Params:
         left_fontsize = 14
 
         # Plot
+        stops_margin_p = 10
         max_diff_continuous_data = timedelta(seconds=30)
 
 
@@ -48,5 +49,11 @@ class Params:
         self.left_fontsize = left_fontsize
 
         # Plot
+        self.stops_margin_n = stops_margin_p / canvas_height_p
         self.max_diff_continuous_data = max_diff_continuous_data
+
+
+        ## Check params
+        if self.stops_margin_n >= .5:
+            raise RuntimeError('stops_margin_n too large: {}'.format(self.stops_margin_n))
 

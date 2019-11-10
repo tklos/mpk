@@ -25,12 +25,13 @@ def create_plot(line_no, date_from, date_to):
 
     date_from, date_to = datetime(2019, 11, 9, 10, 40).replace(tzinfo=pytz.utc), datetime(2019, 11, 9, 12, 0).replace(tzinfo=pytz.utc)
 
-
     # Process stops
     stops = list(route.stop_set.all())
     num_stops = len(stops)
-    ylim = (0, num_stops-1)
 
+    full_range = (num_stops - 1) / (1. - 2 * params.stops_margin_n)
+    full_margin = full_range - num_stops + 1
+    ylim = (0 - full_margin / 2, num_stops - 1 + full_margin / 2)
 
     # Settings
     rcParams.update({
