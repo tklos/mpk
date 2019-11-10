@@ -18,6 +18,7 @@ class Params:
         # Plot
         stops_margin_p = 10
         max_diff_continuous_data = timedelta(seconds=30)
+        line_colours = ['C0', 'C1']
 
 
         ## Processing
@@ -51,6 +52,7 @@ class Params:
         # Plot
         self.stops_margin_n = stops_margin_p / canvas_height_p
         self.max_diff_continuous_data = max_diff_continuous_data
+        self.line_colours = line_colours
 
 
         ## Check params

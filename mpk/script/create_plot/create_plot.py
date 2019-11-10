@@ -2,10 +2,12 @@ import os
 import sys
 from datetime import datetime
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pytz
 from django.template.defaultfilters import linebreaksbr
 from matplotlib import rcParams
+from matplotlib.collections import LineCollection
 
 from routes.models import Route
 from vehicle_locations.models import VehicleLocation
@@ -62,7 +64,7 @@ def create_plot(line_no, date_from, date_to):
             .filter(date__gte=date_from, date__lt=date_to) \
             .filter(is_processed=True)
 
-    data = {}
+    data, gap_data, gap_data_colours = {}, [], []
     for loc in locations:
         if loc.is_at_stop:
             stop_ind = loc.current_stop.route_index
@@ -71,11 +73,15 @@ def create_plot(line_no, date_from, date_to):
 
         d = data.get(loc.vehicle_id, None)
         if d is None:
+            # First data point
             data[loc.vehicle_id] = ([loc.date], [stop_ind])
 
         else:
             diff = loc.date - d[0][-1]
             if diff > params.max_diff_continuous_data:
+                # Long gap
+                gap_data.append(((mdates.date2num(d[0][-1]), d[1][-1]), (mdates.date2num(loc.date), stop_ind)))
+                gap_data_colours.append(params.line_colours[0 if stop_ind > d[1][-1] else 1])
                 d[0].append(loc.date - diff / 2)
                 d[1].append(None)
 
@@ -84,7 +90,11 @@ def create_plot(line_no, date_from, date_to):
 
     # Plot lines
     for d in data.values():
-        plt.plot(d[0], d[1], marker='o')
+        c_ind = 0 if d[1][-1] > d[1][0] else 1
+        plt.plot(d[0], d[1], color=params.line_colours[c_ind])
+
+    gap_line_h = LineCollection(gap_data, colors=gap_data_colours, ls='--')
+    canvas_h.add_collection(gap_line_h)
 
     # Plot figure
     plt.savefig(out_filename, dpi=params.dpi)
