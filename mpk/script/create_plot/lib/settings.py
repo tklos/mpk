@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 
 class Params:
 
@@ -12,6 +14,9 @@ class Params:
         title_fontsize = 24
         bottom_fontsize = 16
         left_fontsize = 14
+
+        # Plot
+        max_diff_continuous_data = timedelta(seconds=30)
 
 
         ## Processing
@@ -41,4 +46,7 @@ class Params:
         self.title_fontsize = title_fontsize
         self.bottom_fontsize = bottom_fontsize
         self.left_fontsize = left_fontsize
+
+        # Plot
+        self.max_diff_continuous_data = max_diff_continuous_data
 

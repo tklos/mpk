@@ -23,7 +23,7 @@ def create_plot(line_no, date_from, date_to):
     params = settings.Params()
     out_filename = 'x.png'
 
-    date_from, date_to = datetime(2019, 11, 9, 10, 30).replace(tzinfo=pytz.utc), datetime(2019, 11, 9, 12, 0).replace(tzinfo=pytz.utc)
+    date_from, date_to = datetime(2019, 11, 9, 10, 40).replace(tzinfo=pytz.utc), datetime(2019, 11, 9, 12, 0).replace(tzinfo=pytz.utc)
 
 
     # Process stops
@@ -67,14 +67,22 @@ def create_plot(line_no, date_from, date_to):
         else:
             stop_ind = loc.current_stop.route_index + loc.to_next_stop_ratio
 
-        d = data.setdefault(loc.vehicle_id, ([], []))
-        d[0].append(loc.date)
-        d[1].append(stop_ind)
+        d = data.get(loc.vehicle_id, None)
+        if d is None:
+            data[loc.vehicle_id] = ([loc.date], [stop_ind])
 
+        else:
+            diff = loc.date - d[0][-1]
+            if diff > params.max_diff_continuous_data:
+                d[0].append(loc.date - diff / 2)
+                d[1].append(None)
 
+            d[0].append(loc.date)
+            d[1].append(stop_ind)
+
+    # Plot lines
     for d in data.values():
         plt.plot(d[0], d[1], marker='o')
-
 
     # Plot figure
     plt.savefig(out_filename, dpi=params.dpi)
