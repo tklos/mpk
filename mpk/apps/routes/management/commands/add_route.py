@@ -105,6 +105,7 @@ class Command(BaseCommand):
                     route=route,
                     route_index=ind,
                     name=stop['name'],
+                    display_name=stop['name'],
                     latitude=round(stop['location'][0], 6),
                     longitude=round(stop['location'][1], 6),
                     radius_m=math.ceil(stop['radius']),

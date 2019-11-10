@@ -4,6 +4,7 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import pytz
+from django.template.defaultfilters import linebreaksbr
 from matplotlib import rcParams
 
 from routes.models import Route
@@ -51,7 +52,7 @@ def create_plot(line_no, date_from, date_to):
 
     # Y axis
     plt.ylim(ylim)
-    plt.yticks(range(num_stops), [stop.name for stop in stops], fontsize=params.left_fontsize)
+    plt.yticks(range(num_stops), [stop.display_name.replace('\\n', '\n') for stop in stops], fontsize=params.left_fontsize, linespacing=0.9)
 
     for stop_ind in range(len(stops)):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)

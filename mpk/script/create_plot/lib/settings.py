@@ -13,7 +13,7 @@ class Params:
         err_fontsize = 11
         title_fontsize = 24
         bottom_fontsize = 16
-        left_fontsize = 14
+        left_fontsize = 12
 
         # Plot
         stops_margin_p = 10
