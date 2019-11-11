@@ -7,6 +7,7 @@ class Stop(models.Model):
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
     route_index = models.IntegerField()
     name = models.CharField(max_length=50)
+    display_name = models.CharField(max_length=50)
     latitude = models.FloatField()
     longitude = models.FloatField()
     radius_m = models.IntegerField()
