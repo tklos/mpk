@@ -1,0 +1,83 @@
+
+.mpk-result {
+	margin-top: 40px;
+}
+
+label {
+	margin-bottom: 0px;
+}
+
+.page-title {
+	margin-bottom: 30px;
+}
+
+
+/* Table */
+table.table-no-border > tbody > tr > td, table.table-no-border > tbody > tr > th {
+	border: none !important;
+}
+
+table.table-td-vertical-align-middle > tbody > tr > td, table.table-td-vertical-align-middle > tbody > tr > th {
+	vertical-align: middle !important;
+}
+
+td.padding-left-st {
+	padding-left: 10px !important;
+}
+
+td.padding-right-st {
+	padding-right: 10px !important;
+}
+
+
+/* Other */
+
+.width-input-date {
+	width: 150px;
+}
+
+.width-auto {
+	width: auto;
+}
+
+.width-full {
+	width: 100%;
+}
+
+.width-empty-long {
+	width: 400px;
+}
+
+.input-font-size-14 {
+	font-size: 14px !important;
+}
+
+.no-margin-bottom {
+	margin-bottom: 0px;
+}
+
+.margin-top-10 {
+	margin-top: 10px;
+}
+
+.padding-b-2 {
+	padding-bottom: 3px;
+}
+
+.padding-r-5 {
+	padding-right: 5px;
+}
+
+.padding-or {
+	padding-left: 20px !important;
+	padding-right: 20px !important;
+}
+
+.float-right {
+	float: right;
+}
+
+.page-margin-bottom {
+	margin-bottom: 100px;
+}
+

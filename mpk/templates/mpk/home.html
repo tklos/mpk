@@ -1,0 +1,64 @@
+{% extends "common/base.html" %}
+
+{% load static %}
+{% load common_tags %}
+
+
+{% block content %}
+
+	<form method="post" class="form-mpk" action="{% url 'mpk:home' %}">
+		{% csrf_token %}
+
+		<div class="row">
+			<table class="table table-condensed table-no-border width-auto table-td-vertical-align-middle no-margin-bottom">
+				<tr>
+					<td><label>Line:</label></td>
+					<td>31</td>
+					<td class="width-empty-long"></td>
+				</tr>
+				<tr>
+					<td><label>Date:</label></td>
+					<td>
+						<table>
+							<tr>
+								<td class="padding-b-2"><label>From:</label></td>
+								<td class="padding-left-st padding-b-2">{{form.date_from}}</td>
+							</tr>
+							<tr>
+								<td><label>To:</label></td>
+								<td class="padding-left-st">{{form.date_to}}</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				{% if form.errors %}
+					{% include "common/form_errors.html" with form=form colspan=3 only %}
+				{% endif %}
+				<tr>
+					<td></td>
+					<td>
+						<input type="submit" value="Submit" class="btn btn-primary"/>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</form>
+
+
+	<div class="mpk-result">
+		{% if was_processed %}
+			{% if success %}
+				<a href="{{plot_path}}" target="_blank">
+					<img src="{{plot_path}}" style="width: 100%"/>
+				</a>
+			{% else %}
+				<span class="error text-danger">Processing failed:<br/>{{error}}</span>
+			{% endif %}
+		{% endif %}
+	</div>
+
+
+	<div class="page-margin-bottom"></div>
+
+{% endblock %}
+

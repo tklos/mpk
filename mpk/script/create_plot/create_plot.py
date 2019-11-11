@@ -3,6 +3,9 @@ import os
 import sys
 from datetime import datetime
 
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pytz
@@ -50,7 +53,7 @@ def calculate_xticks_and_labels(date_from_local, date_to_local, params):
         return [], []
 
 
-def create_plot(line_no, date_from_local, date_to_local):
+def create_plot(line_no, date_from_local, date_to_local, out_filename):
     try:
         route = Route.objects.get(line=line_no)
     except Route.DoesNotExist as exc:
@@ -58,7 +61,6 @@ def create_plot(line_no, date_from_local, date_to_local):
 
 
     params = settings.Params()
-    out_filename = 'x.png'
 
     # Process stops
     stops = list(route.stop_set.all())
@@ -138,13 +140,4 @@ def create_plot(line_no, date_from_local, date_to_local):
 
     # Plot figure
     plt.savefig(out_filename, dpi=params.dpi)
-
-
-def main():
-    local_timezone = pytz.timezone('Europe/Warsaw')
-    date_from, date_to = local_timezone.localize(datetime(2019, 11, 10, 22, 44)), local_timezone.localize(datetime(2019, 11, 11, 0, 0))
-    create_plot(31, date_from, date_to)
-
-
-main()
 
