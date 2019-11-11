@@ -7,7 +7,7 @@ class Params:
         # Window
         window_size_p = (1350, 955)
         dpi = 96.
-        canvas_margin_p = (195, 30, 70, 55)  # l,r,b,t
+        canvas_margin_p = (195, 30, 50, 55)  # l,r,b,t
 
         # Fontsize
         err_fontsize = 11
@@ -20,6 +20,12 @@ class Params:
         max_diff_continuous_data = timedelta(seconds=30)
         line_colours = ['C0', 'C1']
         title_top_margin_p = 12
+        xticks_intervals = [
+                timedelta(minutes=1), timedelta(minutes=2), timedelta(minutes=5), timedelta(minutes=10), timedelta(minutes=20), timedelta(minutes=30),
+                timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
+                timedelta(days=1),
+        ]
+        max_num_xticks = 9
 
 
         ## Processing
@@ -57,6 +63,8 @@ class Params:
         self.max_diff_continuous_data = max_diff_continuous_data
         self.line_colours = line_colours
         self.title_top_margin_n = title_top_margin_n
+        self.xticks_intervals = xticks_intervals
+        self.max_num_xticks = max_num_xticks
 
 
         ## Check params

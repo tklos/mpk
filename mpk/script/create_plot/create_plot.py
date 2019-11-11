@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 from datetime import datetime
@@ -14,7 +15,42 @@ sys.path.insert(0, os.path.dirname(__file__))
 from lib import settings
 
 
-def create_plot(line_no, date_from, date_to):
+def epoch_to_datetime(sec):
+    return datetime.fromtimestamp(sec)
+
+
+def calculate_xticks_and_labels(date_from_local, date_to_local, params):
+    timezone_local = date_from_local.tzinfo
+    date_from_local_utc, date_to_local_utc = date_from_local.replace(tzinfo=pytz.utc), date_to_local.replace(tzinfo=pytz.utc)
+    date_from_e, date_to_e = date_from_local_utc.timestamp(), date_to_local_utc.timestamp()
+
+    for ind in range(len(params.xticks_intervals)):
+        interval = params.xticks_intervals[ind]
+        interval_s = int(interval.total_seconds())
+
+        min_e, max_e = math.ceil(date_from_e / interval_s) * interval_s, math.floor(date_to_e / interval_s) * interval_s
+
+        num_ticks = (max_e - min_e) // interval_s + 1
+        if num_ticks > params.max_num_xticks:
+            continue
+
+        xticks_e = [min_e + i * interval_s for i in range(num_ticks)]
+
+        xticks = list(map(epoch_to_datetime, xticks_e))
+        labels = [dt.strftime('%H:%M') for dt in xticks]
+        for ind, xtick in enumerate(xticks):
+            if ind == 0 or xticks[ind-1].date() != xtick.date():
+                labels[ind] = xtick.strftime('%Y-%m-%d\n%H:%M')
+
+        xticks_loc_d = [timezone_local.localize(d) for d in xticks]
+
+        return xticks_loc_d, labels
+
+    else:
+        return [], []
+
+
+def create_plot(line_no, date_from_local, date_to_local):
     try:
         route = Route.objects.get(line=line_no)
     except Route.DoesNotExist as exc:
@@ -23,9 +59,6 @@ def create_plot(line_no, date_from, date_to):
 
     params = settings.Params()
     out_filename = 'x.png'
-
-    # date_from, date_to = datetime(2019, 11, 9, 10, 40).replace(tzinfo=pytz.utc), datetime(2019, 11, 9, 12, 0).replace(tzinfo=pytz.utc)
-    date_from, date_to = datetime(2019, 11, 10, 21, 44).replace(tzinfo=pytz.utc), datetime(2019, 11, 10, 23, 0).replace(tzinfo=pytz.utc)
 
     # Process stops
     stops = list(route.stop_set.all())
@@ -49,18 +82,22 @@ def create_plot(line_no, date_from, date_to):
     canvas_h = plt.axes((params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n), zorder=-20)
 
     # X axis
-    plt.xlim((date_from, date_to))
+    plt.xlim((date_from_local, date_to_local))
+    xticks, xticklabels = calculate_xticks_and_labels(date_from_local, date_to_local, params)
+    plt.xticks(xticks, xticklabels, fontsize=14)
+    for xtick in xticks:
+        plt.axvline(xtick, c='k', ls=':', lw=0.5)
 
     # Y axis
     plt.ylim(ylim)
-    plt.yticks(range(num_stops), [stop.display_name.replace('\\n', '\n') for stop in stops], fontsize=params.left_fontsize, linespacing=0.9)
+    plt.yticks(range(num_stops), [stop.display_name.replace('\\n', '\n') for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
 
     for stop_ind in range(len(stops)):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
 
     # Data
     locations = route.vehiclelocation_set \
-            .filter(date__gte=date_from, date__lt=date_to) \
+            .filter(date__gte=date_from_local, date__lt=date_to_local) \
             .filter(is_processed=True)
 
     data, gap_data, gap_data_colours = {}, [], []
@@ -103,5 +140,11 @@ def create_plot(line_no, date_from, date_to):
     plt.savefig(out_filename, dpi=params.dpi)
 
 
-create_plot(31, None, None)
+def main():
+    local_timezone = pytz.timezone('Europe/Warsaw')
+    date_from, date_to = local_timezone.localize(datetime(2019, 11, 10, 22, 44)), local_timezone.localize(datetime(2019, 11, 11, 0, 0))
+    create_plot(31, date_from, date_to)
+
+
+main()
 
