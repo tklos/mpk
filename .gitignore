@@ -7,6 +7,8 @@ mpk/settings/*
 !mpk/settings/base.py
 !mpk/settings/*.template
 
+/public/media/
+
 *.pyc
 __pycache__/
 

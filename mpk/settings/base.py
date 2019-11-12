@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 import sys
 
+import pytz
+
 from .secrets_base import *
 
 
@@ -31,6 +33,7 @@ sys.path.append(os.path.join(BASE_DIR, 'apps/'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG = ... (env)
+# LOCAL_MEDIA_SERVE = ... (env)
 
 # ALLOWED_HOSTS = ... (env)
 
@@ -62,7 +65,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'mpk.urls'
 
-TEMPLATES_DIR = os.path.join(BASE_DIR, 'mpk/templates')
+TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -75,6 +78,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': {
+                'common_tags': 'lib.templatetags.common_templatetags',
+            },
         },
     },
 ]
@@ -125,13 +131,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'public/static/')
+STATIC_ROOT = os.path.join(BASE_DIR, '../public/static/')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, '../public/media/')
+
+
+# Timezone
+LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
 # Location consts
@@ -155,6 +165,15 @@ LOGGING = {
         },
     },
     'handlers': {
+        'default': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': None,
+            'maxBytes': 5 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'simple',
+            'encoding': 'utf8',
+        },
         'get-locations-file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -166,10 +185,15 @@ LOGGING = {
         },
     },
     'loggers': {
+        'default': {
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'get-locations': {
             'handlers': ['get-locations-file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
         },
     },
 }

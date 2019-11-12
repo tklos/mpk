@@ -1,0 +1,18 @@
+
+<tr {% if trid %} id="{{trid}}"{% endif %} {% if trclass %}class="{{trclass}}" {% endif %}>
+	<td colspan="{{colspan}}">
+		<ul class="errorlist no-margin-bottom">
+			{% for field in form %}
+				{% if field.errors %}
+					{% for error in field.errors %}
+						<li><span class="error text-danger">{{error}}</span></li>
+					{% endfor %}
+				{% endif %}
+			{% endfor %}
+			{% for error in form.non_field_errors %}
+				<li><span class="error text-danger">{{error}}</span></li>
+			{% endfor %}
+		</ul>
+	</td>
+</tr>
+
