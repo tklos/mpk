@@ -15,6 +15,7 @@ DATA_DIR = '{}/resources'.format(settings.BASE_DIR)
 
 
 def read_stops_file(filename):
+    """ Returns a dict of stop_code: (lat, long) """
     stops_data = {}
 
     with open(filename) as f:
@@ -26,23 +27,29 @@ def read_stops_file(filename):
 
 
 def read_route_file(filename):
+    """ Returns a list stops
+    Each stop is a dict {'name': name, 'codes': [stop_code1, stop_code2]}
+    """
     route_data = {}
 
     root = ET.parse(filename).getroot()
-    for version_ind, version_tag in enumerate(root.iter('wariant')):
-        if version_ind == 0:
-            for stop_ind, stop_tag in enumerate(version_tag.find('przystanek').find('czasy').findall('przystanek')):
-                route_data[stop_tag.get('nazwa')] = {
-                    'index': stop_ind,
-                    'codes': [stop_tag.get('id')],
-                }
+    route_versions = list(root.iter('wariant'))
+    if len(route_versions) != 2:
+        raise ValueError('There have to be exactly two route versions; got {}'.format(len(route_versions)))
 
-        else:
-            for stop_tag in version_tag.find('przystanek').find('czasy').findall('przystanek'):
-                try:
-                    route_data[stop_tag.get('nazwa')]['codes'].append(stop_tag.get('id'))
-                except KeyError as exc:
-                    raise ValueError('Unknown stop "{}" in the outward route'.format(stop_tag.get('nazwa'))) from exc
+    # Direction 1 -- outward
+    for stop_ind, stop_tag in enumerate(route_versions[0].find('przystanek').find('czasy').findall('przystanek')):
+        route_data[stop_tag.get('nazwa')] = {
+            'index': stop_ind,
+            'codes': [stop_tag.get('id')],
+        }
+
+    # Direction 2 -- inward
+    for stop_tag in route_versions[1].find('przystanek').find('czasy').findall('przystanek'):
+        try:
+            route_data[stop_tag.get('nazwa')]['codes'].append(stop_tag.get('id'))
+        except KeyError as exc:
+            raise KeyError('Unknown stop "{}" in the return route'.format(stop_tag.get('nazwa'))) from exc
 
     route_data_l = len(route_data) * [None]
     for k, v in route_data.items():
@@ -85,13 +92,10 @@ class Command(BaseCommand):
 
         # Read files
         stops_data = read_stops_file(stops_file)
-        # pprint(stops_data)
         route_data = read_route_file(route_file)
-        # pprint(route_data)
 
         # Create route stops data
         route_stops_data = create_route_stops_data(route_data, stops_data)
-        # pprint(route_stops_data)
 
         # Save data
         with transaction.atomic():
