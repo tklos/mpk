@@ -42,7 +42,7 @@ def read_route_file(filename):
                 try:
                     route_data[stop_tag.get('nazwa')]['codes'].append(stop_tag.get('id'))
                 except KeyError as exc:
-                    raise KeyError('Unknown stop "{}" in the return route'.format(stop_tag.get('nazwa'))) from exc
+                    raise ValueError('Unknown stop "{}" in the outward route'.format(stop_tag.get('nazwa'))) from exc
 
     route_data_l = len(route_data) * [None]
     for k, v in route_data.items():
@@ -58,7 +58,7 @@ def create_route_stops_data(route_data, stops_data):
     for route_stop in route_data:
         rec = {'name': route_stop['name']}
         if len(route_stop['codes']) != 2:
-            raise RuntimeError('feree')
+            raise ValueError('Unknown stop "{}" in the inward route'.format(route_stop['name']))
 
         s1, s2 = stops_data[route_stop['codes'][0]], stops_data[route_stop['codes'][1]]
         center = ((s1[0] + s2[0]) / 2, (s1[1] + s2[1]) / 2)
