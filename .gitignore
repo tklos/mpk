@@ -7,6 +7,12 @@ mpk/settings/*
 !mpk/settings/base.py
 !mpk/settings/*.template
 
+mpk/resources/*
+!mpk/resources/.keep
+!mpk/resources/routes/
+mpk/resources/routes/*
+!mpk/resources/routes/.keep
+
 /public/media/
 
 *.pyc
