@@ -141,3 +141,5 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     # Plot figure
     plt.savefig(out_filename, dpi=params.dpi)
 
+    plt.close(figure_h)
+
