@@ -37,7 +37,7 @@ class HomeView(FormView):
 
         # Processing arguments
         line_no = form.cleaned_data['line']
-        date_from, date_to = settings.LOCAL_TIMEZONE.localize(form.cleaned_data['date_from']), settings.LOCAL_TIMEZONE.localize(form.cleaned_data['date_to'])
+        date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
 
         # Directory and filename
         location = ''.join(random.choices(string.ascii_letters, k=6))
