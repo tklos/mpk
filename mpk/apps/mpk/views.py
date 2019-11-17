@@ -36,7 +36,7 @@ class HomeView(FormView):
         from mpk.script.create_plot.create_plot import create_plot
 
         # Processing arguments
-        line_no = 31
+        line_no = form.cleaned_data['line']
         date_from, date_to = settings.LOCAL_TIMEZONE.localize(form.cleaned_data['date_from']), settings.LOCAL_TIMEZONE.localize(form.cleaned_data['date_to'])
 
         # Directory and filename

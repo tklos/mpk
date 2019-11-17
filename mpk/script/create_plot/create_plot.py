@@ -139,7 +139,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     canvas_h.add_collection(gap_line_h)
 
     # Title
-    title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no)
+    title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no.upper())
     full_window_h.text(.5, params.title_top_margin_n, title_str, fontsize=params.title_fontsize, va='top', ha='center')
 
     # Plot figure
