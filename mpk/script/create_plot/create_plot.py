@@ -96,7 +96,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # Y axis
     plt.ylim(ylim)
-    plt.yticks(range(num_stops), [stop.display_name.replace('\\n', '\n') for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
+    plt.yticks(range(num_stops), [stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
 
     for stop_ind in range(len(stops)):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
