@@ -5,6 +5,7 @@ import pytz
 import requests
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db import IntegrityError
 
 from lib import distance
 from routes.models import Route
@@ -29,7 +30,6 @@ def _is_at_stop(stop, dist):
 def calculate_position_between_stops(stop_a, stop_b, dist_a, dist_b):
     std_stops_dist = distance.distance(stop_a, stop_b)
     this_total_dist = dist_a + dist_b
-    logger.debug((std_stops_dist, this_total_dist))
 
     if this_total_dist > std_stops_dist * settings.MAX_ALLOWED_DETOUR_RATIO:
         # We are too far from the planned route
@@ -42,7 +42,6 @@ def calculate_position_between_stops(stop_a, stop_b, dist_a, dist_b):
         dist_limited = dist_a - stop_a.radius_m - settings.STOP_ADD_RADIUS_M
         total_dist_limited = dist_a + dist_b - stop_a.radius_m - stop_b.radius_m - 2 * settings.STOP_ADD_RADIUS_M
         to_next_stop_ratio = dist_limited / total_dist_limited
-        logger.debug(to_next_stop_ratio)
 
         return {
             'is_processed': True,
@@ -80,11 +79,11 @@ def process_vehicle(el, routes_d, date_created):
         # Vehicle at a stop
         current_stop_ind = next((ind for ind in range(len(is_at_stop_l)) if is_at_stop_l[ind]))
         current_stop = stops[current_stop_ind]
-        logger.debug('at stop {} ({:.2f})'.format(current_stop, stop_dist[current_stop_ind]))
+
         proc_status = {
             'is_processed': True,
             'is_at_stop': True,
-            'current_stop': stops[current_stop_ind],
+            'current_stop': current_stop,
         }
 
     else:
@@ -102,7 +101,6 @@ def process_vehicle(el, routes_d, date_created):
             ind_a, ind_b = min(ind_final, ind_other), max(ind_final, ind_other)
             dist_loc_next, dist_stop_next = distance.distance(loc, stops[ind_other]), distance.distance(stops[ind_final], stops[ind_other])
             if dist_stop_next < dist_loc_next:
-                logger.debug('Beyond')
                 proc_status = {
                     'is_processed': False,
                     'unprocessed_reason': const.UNPROC_REASON_BEYOND_FINAL_STOP,
@@ -128,20 +126,24 @@ def process_vehicle(el, routes_d, date_created):
 
     logger.debug(proc_status)
     # Save
-    loc = VehicleLocation.objects.create(
-        route=route,
-        vehicle_id=vehicle_id,
-        date=date_created,
-        latitude=lat,
-        longitude=lng,
-        is_processed=proc_status['is_processed'],
-        unprocessed_reason=proc_status.get('unprocessed_reason'),
-        is_at_stop=proc_status.get('is_at_stop'),
-        current_stop=proc_status.get('current_stop'),
-        to_next_stop_ratio=round_or_none(proc_status.get('to_next_stop_ratio'), 3),
-    )
-    logger.debug(loc)
-    logger.debug('')
+    try:
+        loc = VehicleLocation.objects.create(
+            route=route,
+            vehicle_id=vehicle_id,
+            date=date_created,
+            latitude=lat,
+            longitude=lng,
+            is_processed=proc_status['is_processed'],
+            unprocessed_reason=proc_status.get('unprocessed_reason'),
+            is_at_stop=proc_status.get('is_at_stop'),
+            current_stop=proc_status.get('current_stop'),
+            to_next_stop_ratio=round_or_none(proc_status.get('to_next_stop_ratio'), 3),
+        )
+        logger.debug(loc)
+        logger.debug('')
+
+    except Exception as exc:
+        logger.exception(exc)
 
 
 class Command(BaseCommand):
