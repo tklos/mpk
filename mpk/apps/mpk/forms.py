@@ -7,6 +7,18 @@ from django.core.exceptions import ValidationError
 from routes.models import Route
 
 
+def line_sort_order(el):
+    line = el[0]
+
+    # int
+    try:
+        return int(line)
+    except Exception:
+        pass
+    # string
+    return 1000 + sum(ord(c) for c in line)
+
+
 class ProcessForm(forms.Form):
     line = forms.ChoiceField()
     date_from = forms.CharField(max_length=16)
@@ -28,7 +40,8 @@ class ProcessForm(forms.Form):
         current_time = datetime.now(settings.LOCAL_TIMEZONE)
 
         self.fields['line'].widget.attrs.update(dropdown_field_attrs)
-        line_choices = [(route.line, route.line) for route in Route.objects.all()]
+        line_choices = [(route.line, route.line.upper()) for route in Route.objects.all()]
+        line_choices.sort(key=line_sort_order)
         self.fields['line'].choices = line_choices
 
         self.fields['date_from'].widget.attrs.update(date_field_attrs)
