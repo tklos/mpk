@@ -21,7 +21,7 @@ def line_sort_order(el):
 
 class ProcessForm(forms.Form):
     line = forms.ChoiceField()
-    date_from = forms.CharField(max_length=16)
+    date_from = forms.CharField(max_length=16, initial='-2hours')
     date_to = forms.CharField(max_length=16, initial='now')
 
     def __init__(self, *args, **kwargs):
@@ -36,39 +36,46 @@ class ProcessForm(forms.Form):
         date_field_attrs = {
             'class': 'form-control input-sm input-font-size-14 width-input-date',
             'autocomplete': 'off',
-            'placeholder': 'yyyy-mm-dd HH:MM',
         }
         dropdown_field_attrs = {
             'class': 'form-control input-sm input-font-size-14 width-auto',
         }
 
-        self.fields['line'].widget.attrs.update(dropdown_field_attrs)
         line_choices = [(route.line, route.line.upper()) for route in Route.objects.all()]
         line_choices.sort(key=line_sort_order)
         self.fields['line'].choices = line_choices
+        self.fields['line'].widget.attrs.update(dropdown_field_attrs)
 
         self.fields['date_from'].widget.attrs.update(date_field_attrs)
-        self.fields['date_from'].initial = (self.current_time - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M')
+        self.fields['date_from'].widget.attrs['placeholder'] = 'datetime or offset'
 
         self.fields['date_to'].widget.attrs.update(date_field_attrs)
         self.fields['date_to'].widget.attrs['placeholder'] = 'datetime or "now"'
 
     def clean(self):
+        # Parse dates
         date_from_s, date_to_s = self.cleaned_data['date_from'].strip(), self.cleaned_data['date_to'].strip()
-
         try:
-            # From date
-            date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(date_from_s, '%Y-%m-%d %H:%M'))
-
             # To date
             if date_to_s == 'now':
                 date_to = self.current_time_next_m
             else:
                 date_to = settings.LOCAL_TIMEZONE.localize(datetime.strptime(date_to_s, '%Y-%m-%d %H:%M'))
 
+            # From date
+            prefix, suffix = '-', 'hours'
+            if date_from_s.startswith(prefix) and date_from_s.endswith(suffix):
+                offset_h = float(date_from_s[len(prefix):-len(suffix)])
+                date_from = date_to - timedelta(hours=offset_h)
+                if date_to_s == 'now':
+                    date_from -= timedelta(minutes=1)
+            else:
+                date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(date_from_s, '%Y-%m-%d %H:%M'))
+
         except ValueError as exc:
             raise ValidationError('Can\'t parse date: {}'.format(exc))
 
+        # Check dates
         if date_to < date_from:
             raise ValidationError('Date-to earlier than date-from..')
         self.cleaned_data['date_from'], self.cleaned_data['date_to'] = date_from, date_to
