@@ -5,6 +5,8 @@ import xml.etree.ElementTree as ET
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db import transaction
+from django.db.models import Max
+from django.db.models.functions import Coalesce
 
 from lib import distance
 from routes.models import Route
@@ -12,6 +14,24 @@ from stops.models import Stop
 
 
 DATA_DIR = '{}/resources'.format(settings.BASE_DIR)
+
+ROUTE_STOPS_STEP = 100
+NOT_INT_ROUTE_MIN_ID = 100000
+
+
+def reset_auto_increment():
+    import os
+    from io import StringIO
+    from django.core.management import call_command
+    from django.db import connection
+
+    os.environ['DJANGO_COLORS'] = 'nocolor'
+
+    commands = StringIO()
+    cursor = connection.cursor()
+    call_command('sqlsequencereset', 'stops', stdout=commands)
+
+    cursor.execute(commands.getvalue())
 
 
 def read_stops_file(filename):
@@ -39,7 +59,11 @@ def read_route_file(filename):
 
     # Direction 1 -- outward
     for stop_ind, stop_tag in enumerate(route_versions[0].find('przystanek').find('czasy').findall('przystanek')):
-        route_data[stop_tag.get('nazwa')] = {
+        name = stop_tag.get('nazwa')
+        if name in route_data:
+            raise ValueError('Stop {} appears twice in the outward route'.format(name))
+
+        route_data[name] = {
             'index': stop_ind,
             'codes': [stop_tag.get('id')],
         }
@@ -65,7 +89,7 @@ def create_route_stops_data(route_data, stops_data):
     for route_stop in route_data:
         rec = {'name': route_stop['name']}
         if len(route_stop['codes']) != 2:
-            raise ValueError('Unknown stop "{}" in the inward route'.format(route_stop['name']))
+            raise ValueError('Stop "{}" doesn\'t exist in both route versions (or exists more than twice)'.format(route_stop['name']))
 
         s1, s2 = stops_data[route_stop['codes'][0]], stops_data[route_stop['codes'][1]]
         center = ((s1[0] + s2[0]) / 2, (s1[1] + s2[1]) / 2)
@@ -82,9 +106,29 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('line_no')
+        parser.add_argument('-s', '--stop-starting-id', dest='stop_starting_id', type=int, help='Stop starting id')
+        parser.add_argument('-n', '--dont-set-stop-starting-id', dest='no_stop_starting_id', action='store_true', help='Don\'t set stop starting id')
 
     def handle(self, *args, **kwargs):
+        # Parse arguments
         line_no = kwargs['line_no']
+        stop_starting_id = kwargs['stop_starting_id']
+        no_stop_starting_id = kwargs['no_stop_starting_id']
+
+        if no_stop_starting_id and stop_starting_id is not None:
+            raise ValueError('Options -s and -n can\'t be set at the same time')
+
+        # Get stop starting id
+        if no_stop_starting_id:
+            reset_auto_increment()
+
+        else:
+            if stop_starting_id is None:
+                try:
+                    stop_starting_id = int(line_no) * ROUTE_STOPS_STEP
+                except ValueError:
+                    max_val = Stop.objects.aggregate(max_val=Coalesce(Max('id'), 0))['max_val']
+                    stop_starting_id = NOT_INT_ROUTE_MIN_ID + max(max_val + ROUTE_STOPS_STEP - NOT_INT_ROUTE_MIN_ID, 0) // ROUTE_STOPS_STEP * ROUTE_STOPS_STEP
 
         # Files
         stops_file = '{}/stops.csv'.format(DATA_DIR)
@@ -106,6 +150,7 @@ class Command(BaseCommand):
 
             for ind, stop in enumerate(route_stops_data):
                 stop = Stop.objects.create(
+                    id=None if no_stop_starting_id else stop_starting_id + ind,
                     route=route,
                     route_index=ind,
                     name=stop['name'],
