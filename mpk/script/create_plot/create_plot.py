@@ -54,6 +54,10 @@ def calculate_xticks_and_labels(date_from_local, date_to_local, params):
 
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
+    # Check params
+    if date_from_local.tzinfo is None or date_to_local.tzinfo is None:
+        raise ValueError('Dates have to be timezone-aware')
+
     try:
         route = Route.objects.get(line=line_no)
     except Route.DoesNotExist as exc:
@@ -92,7 +96,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # Y axis
     plt.ylim(ylim)
-    plt.yticks(range(num_stops), [stop.display_name.replace('\\n', '\n') for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
+    plt.yticks(range(num_stops), [stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
 
     for stop_ind in range(len(stops)):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
@@ -140,4 +144,6 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # Plot figure
     plt.savefig(out_filename, dpi=params.dpi)
+
+    plt.close(figure_h)
 
