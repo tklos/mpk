@@ -4,8 +4,11 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
+from routes.models import Route
+
 
 class ProcessForm(forms.Form):
+    line = forms.ChoiceField()
     date_from = forms.CharField(max_length=16)
     date_to = forms.CharField(max_length=16)
 
@@ -18,11 +21,19 @@ class ProcessForm(forms.Form):
             'autocomplete': 'off',
             'placeholder': 'yyyy-mm-dd HH:MM',
         }
+        dropdown_field_attrs = {
+            'class': 'form-control input-sm input-font-size-14 width-auto',
+        }
 
         current_time = datetime.now(settings.LOCAL_TIMEZONE)
 
+        self.fields['line'].widget.attrs.update(dropdown_field_attrs)
+        line_choices = [(route.line, route.line) for route in Route.objects.all()]
+        self.fields['line'].choices = line_choices
+
         self.fields['date_from'].widget.attrs.update(date_field_attrs)
         self.fields['date_from'].initial = (current_time - timedelta(hours=2)).strftime('%Y-%m-%d %H:%M')
+
         self.fields['date_to'].widget.attrs.update(date_field_attrs)
         self.fields['date_to'].initial = current_time.strftime('%Y-%m-%d %H:%M')
 
