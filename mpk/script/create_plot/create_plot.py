@@ -49,8 +49,7 @@ def calculate_xticks_and_labels(date_from_local, date_to_local, params):
 
         return xticks_loc_d, labels
 
-    else:
-        return [], []
+    return [], []
 
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
@@ -88,8 +87,11 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     canvas_h = plt.axes((params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n), zorder=-20)
 
     # X axis
-    plt.xlim((date_from_local, date_to_local))
     xticks, xticklabels = calculate_xticks_and_labels(date_from_local, date_to_local, params)
+    if not xticks:
+        raise RuntimeError('Can\'t calculate xticks for this interval')
+
+    plt.xlim((date_from_local, date_to_local))
     plt.xticks(xticks, xticklabels, fontsize=14)
     for xtick in xticks:
         plt.axvline(xtick, c='k', ls=':', lw=0.5)

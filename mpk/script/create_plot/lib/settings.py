@@ -23,7 +23,6 @@ class Params:
         xticks_intervals = [
                 timedelta(minutes=1), timedelta(minutes=2), timedelta(minutes=5), timedelta(minutes=10), timedelta(minutes=20), timedelta(minutes=30),
                 timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
-                timedelta(days=1),
         ]
         max_num_xticks = 9
 
