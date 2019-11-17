@@ -54,6 +54,10 @@ def calculate_xticks_and_labels(date_from_local, date_to_local, params):
 
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
+    # Check params
+    if date_from_local.tzinfo is None or date_to_local.tzinfo is None:
+        raise ValueError('Dates have to be timezone-aware')
+
     try:
         route = Route.objects.get(line=line_no)
     except Route.DoesNotExist as exc:
