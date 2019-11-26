@@ -71,7 +71,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     full_range = (num_stops - 1) / (1. - 2 * params.stops_margin_n)
     full_margin = full_range - num_stops + 1
-    ylim = (0 - full_margin / 2, num_stops - 1 + full_margin / 2)
+    ylim = (num_stops - 1 + full_margin / 2, 0 - full_margin / 2)
 
     # Settings
     rcParams.update({
@@ -97,8 +97,8 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         plt.axvline(xtick, c='k', ls=':', lw=0.5)
 
     # Y axis
-    plt.ylim(ylim)
     plt.yticks(range(num_stops), [stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
+    plt.ylim(ylim)
 
     for stop_ind in range(len(stops)):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
