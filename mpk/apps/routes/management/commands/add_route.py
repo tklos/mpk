@@ -15,9 +15,6 @@ from stops.models import Stop
 
 DATA_DIR = '{}/resources'.format(settings.BASE_DIR)
 
-ROUTE_STOPS_STEP = 100
-NOT_INT_ROUTE_MIN_ID = 100000
-
 
 def reset_auto_increment():
     import os
@@ -106,29 +103,28 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('line_no')
-        parser.add_argument('-s', '--stop-starting-id', dest='stop_starting_id', type=int, help='Stop starting id')
-        parser.add_argument('-n', '--dont-set-stop-starting-id', dest='no_stop_starting_id', action='store_true', help='Don\'t set stop starting id')
+        parser.add_argument('-r', '--route-id', dest='route_id', type=int, help='Route id')
+        parser.add_argument('-n', '--dont-set-route-id', dest='no_route_id', action='store_true', help='Don\'t set route id')
 
     def handle(self, *args, **kwargs):
         # Parse arguments
         line_no = kwargs['line_no']
-        stop_starting_id = kwargs['stop_starting_id']
-        no_stop_starting_id = kwargs['no_stop_starting_id']
+        route_id = kwargs['route_id']
+        no_route_id = kwargs['no_route_id']
 
-        if no_stop_starting_id and stop_starting_id is not None:
-            raise ValueError('Options -s and -n can\'t be set at the same time')
+        if no_route_id and route_id is not None:
+            raise ValueError('Options -r and -n can\'t be set at the same time')
 
-        # Get stop starting id
-        if no_stop_starting_id:
+        # Get route id
+        if no_route_id:
             reset_auto_increment()
-
         else:
-            if stop_starting_id is None:
+            if route_id is None:
                 try:
-                    stop_starting_id = int(line_no) * ROUTE_STOPS_STEP
+                    route_id = int(line_no)
                 except ValueError:
-                    max_val = Stop.objects.aggregate(max_val=Coalesce(Max('id'), 0))['max_val']
-                    stop_starting_id = NOT_INT_ROUTE_MIN_ID + max(max_val + ROUTE_STOPS_STEP - NOT_INT_ROUTE_MIN_ID, 0) // ROUTE_STOPS_STEP * ROUTE_STOPS_STEP
+                    max_route_id = Route.objects.aggregate(max_val=Coalesce(Max('id'), 0))['max_val']
+                    route_id = max(max_route_id, settings.NOT_INT_ROUTE_MIN_ID) + 1
 
         # Files
         stops_file = '{}/stops.csv'.format(DATA_DIR)
@@ -144,13 +140,14 @@ class Command(BaseCommand):
         # Save data
         with transaction.atomic():
             route = Route.objects.create(
+                id=None if no_route_id else route_id,
                 line=line_no,
             )
             print('Added route {}'.format(route))
 
             for ind, stop in enumerate(route_stops_data):
                 stop = Stop.objects.create(
-                    id=None if no_stop_starting_id else stop_starting_id + ind,
+                    id=None if no_route_id else route_id * settings.ROUTE_STOPS_STEP + ind,
                     route=route,
                     route_index=ind,
                     name=stop['name'],
