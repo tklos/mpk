@@ -3,6 +3,17 @@ from django.core.management import BaseCommand
 from routes.models import Route
 
 
+def line_sort_order(route):
+    line = route.line
+
+    try:
+        return int(line)
+    except Exception:
+        pass
+
+    return 1000 + sum(ord(c) for c in line)
+
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -11,7 +22,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         list_stops = kwargs['list_stops']
 
-        for route in Route.objects.all():
+        for route in sorted(Route.objects.all(), key=line_sort_order):
             print(route)
             if list_stops:
                 for stop in route.stop_set.all():
