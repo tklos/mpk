@@ -5,7 +5,6 @@ import pytz
 import requests
 from django.conf import settings
 from django.core.management import BaseCommand
-from django.db import IntegrityError
 
 from lib import distance
 from routes.models import Route
@@ -162,8 +161,20 @@ class Command(BaseCommand):
         resp.raise_for_status()
 
         date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
+        data = resp.json()
+
+        # There might be duplicate vehicle ids in the data,
+        # e.g. {'name': '3', 'type': 'tram', 'y': 16.98013, 'x': 51.12673, 'k': 14339663} and {'name': '3', 'type': 'tram', 'y': 17.03928, 'x': 51.107746, 'k': 14339663}
+        # In that case, remove all duplicate records
+        data_d = {}
+        for d in data:
+            data_d.setdefault(d['k'], []).append(d)
+        for vehicle_id in list(data_d.keys()):
+            if len(data_d[vehicle_id]) != 1:
+                logger.error('Duplicate vehicle id {}: {}'.format(vehicle_id, data_d[vehicle_id]))
+                del data_d[vehicle_id]
 
         # Save data
-        for el in resp.json():
-            process_vehicle(el,routes_d, date_created)
+        for el in data_d.values():
+            process_vehicle(el[0], routes_d, date_created)
 
