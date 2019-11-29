@@ -2,6 +2,8 @@ from django.core.management import BaseCommand
 
 from routes.models import Route
 
+from .add_route import check_if_any_stops_overlap
+
 
 def line_sort_order(route):
     line = route.line
@@ -27,5 +29,7 @@ class Command(BaseCommand):
             if list_stops:
                 for stop in route.stop_set.all():
                     print('    {}'.format(stop))
+
+                check_if_any_stops_overlap(route)
                 print('')
 

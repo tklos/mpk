@@ -1,5 +1,6 @@
 import csv
 import math
+import warnings
 import xml.etree.ElementTree as ET
 
 from django.conf import settings
@@ -8,12 +9,15 @@ from django.db import transaction
 from django.db.models import Max
 from django.db.models.functions import Coalesce
 
-from lib import distance
+from lib import distance, warn
 from routes.models import Route
 from stops.models import Stop
 
 
 DATA_DIR = '{}/resources'.format(settings.BASE_DIR)
+
+
+warnings.formatwarning = warn.format_warning
 
 
 def reset_auto_increment():
@@ -82,6 +86,9 @@ def read_route_file(filename):
 
 
 def create_route_stops_data(route_data, stops_data):
+    """ Returns a list of stops
+    Each stops is a dict {'name': name, 'location': center-location, 'radius': radius'}
+    """
     ret_data = []
     for route_stop in route_data:
         rec = {'name': route_stop['name']}
@@ -97,6 +104,22 @@ def create_route_stops_data(route_data, stops_data):
         ret_data.append(rec)
 
     return ret_data
+
+
+def check_if_any_stops_overlap(route):
+    stops = list(route.stop_set.all().order_by('route_index'))
+
+    for ind1 in range(len(stops)):
+        for ind2 in range(ind1+1, len(stops)):
+            stop1, stop2 = stops[ind1], stops[ind2]
+
+            stops_dist = distance.distance(stop1, stop2)
+            stops_combined_range = stop1.radius_m + stop2.radius_m + 2 * settings.STOP_ADD_RADIUS_M
+            if stops_dist <= stops_combined_range:
+                warnings.warn('Stops ({}) and ({}) overlap by {:.2f}m'.format(
+                    stop1, stop2,
+                    stops_combined_range - stops_dist,
+                ))
 
 
 class Command(BaseCommand):
@@ -157,4 +180,7 @@ class Command(BaseCommand):
                     radius_m=math.ceil(stop['radius']),
                 )
                 print('Added stop {}'.format(stop))
+
+        # Check if any two stops overlap
+        check_if_any_stops_overlap(route)
 
