@@ -68,10 +68,23 @@ def process_vehicle(el, routes_d, date_created):
     num_true = is_at_stop_l.count(True)
 
     if num_true > 1:
-        # Vehicle at multiple stops
+        # Vehicle at multiple stops; choosing nearest stop
+        curr_stops_ind_l = [ind for ind, is_at_stop in enumerate(is_at_stop_l) if is_at_stop]
+        curr_stops_dist_l = [stop_dist[ind] for ind in curr_stops_ind_l]
+        _, nearest_stop_ind = min(zip(curr_stops_dist_l, curr_stops_ind_l))
+        nearest_stop = stops[nearest_stop_ind]
+
+        logger.warning('Vehicle at multiple stops: {}   vehicle ({} {} {} {})   stops {}   nearest {}'.format(
+            date_created,
+            line, vehicle_id, lat, lng,
+            [stops[ind] for ind in curr_stops_ind_l],
+            nearest_stop,
+        ))
+
         proc_status = {
-            'is_processed': False,
-            'unprocessed_reason': const.UNPROC_REASON_MULTIPLE_STOPS,
+            'is_processed': True,
+            'is_at_stop': True,
+            'current_stop': nearest_stop,
         }
 
     elif num_true == 1:
