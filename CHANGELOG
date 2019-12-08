@@ -1,4 +1,9 @@
 
+ ** v0.2.0   08.12.2019
+    - Additional checks when adding route
+    - When vehicle is at multiple stops, choose the nearest one
+
+
  ** v0.1.0   26.11.2019
     - First working version
 
