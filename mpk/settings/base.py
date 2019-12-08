@@ -144,6 +144,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, '../public/media/')
 LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
+# Routes and stops
+NOT_INT_ROUTE_MIN_ID = 1000
+ROUTE_STOPS_STEP = 100
+
+
 # Location consts
 # Distance in kilometers between current position and the one one degree east/west or north/south
 ONE_DEG_X_KM =  69.977  # 2 * PI * EARTH_RADIUS * sin(radians(90-lat)) / 360, (EARTH_RADIUS=6371, lat=51)

@@ -1,6 +1,8 @@
 import csv
 import math
+import warnings
 import xml.etree.ElementTree as ET
+from collections import Counter
 
 from django.conf import settings
 from django.core.management import BaseCommand
@@ -8,15 +10,15 @@ from django.db import transaction
 from django.db.models import Max
 from django.db.models.functions import Coalesce
 
-from lib import distance
+from lib import distance, warn
 from routes.models import Route
 from stops.models import Stop
 
 
 DATA_DIR = '{}/resources'.format(settings.BASE_DIR)
 
-ROUTE_STOPS_STEP = 100
-NOT_INT_ROUTE_MIN_ID = 100000
+
+warnings.formatwarning = warn.format_warning
 
 
 def reset_auto_increment():
@@ -57,78 +59,108 @@ def read_route_file(filename):
     if len(route_versions) != 2:
         raise ValueError('There have to be exactly two route versions; got {}'.format(len(route_versions)))
 
-    # Direction 1 -- outward
-    for stop_ind, stop_tag in enumerate(route_versions[0].find('przystanek').find('czasy').findall('przystanek')):
-        name = stop_tag.get('nazwa')
-        if name in route_data:
-            raise ValueError('Stop {} appears twice in the outward route'.format(name))
+    stops = [route_versions[dir_].find('przystanek').find('czasy').findall('przystanek') for dir_ in (0, 1)]
+    stops[1] = list(reversed(stops[1]))
 
-        route_data[name] = {
+    direction_names = ['outward', 'return']
+    stop_names = [[stop.get('nazwa').strip() for stop in stops[dir_]] for dir_ in (0, 1)]
+
+    # Check if stop names are unique within each direction
+    for dir_ in 0, 1:
+        counter = Counter(stop_names[dir_])
+        most_common = counter.most_common(1)[0]
+        if most_common[1] > 1:
+            raise ValueError('Stop "{}" int the {} route appears more than once'.format(most_common[0], direction_names[dir_]))
+
+    # Check if stops are in the correct order
+    for stop1, stop2 in zip(*stop_names):
+        if stop1 != stop2:
+            raise ValueError('Stops not in reverse order; expected "{}" in the return route, got "{}"'.format(stop1, stop2))
+
+    if len(stop_names[0]) < len(stop_names[1]):
+        raise ValueError('Unknown stop "{}" in the return route'.format(stop_names[1][len(stop_names[0])]))
+    elif len(stop_names[0]) > len(stop_names[1]):
+        raise ValueError('Stop "{}" doesn\'t exist in the return route'.format(stop_names[0][len(stop_names[1])]))
+
+
+    # Direction 1 -- outward
+    for stop_ind, stop_tag in enumerate(stops[0]):
+        route_data[stop_tag.get('nazwa')] = {
             'index': stop_ind,
             'codes': [stop_tag.get('id')],
         }
 
     # Direction 2 -- inward
-    for stop_tag in route_versions[1].find('przystanek').find('czasy').findall('przystanek'):
-        try:
-            route_data[stop_tag.get('nazwa')]['codes'].append(stop_tag.get('id'))
-        except KeyError as exc:
-            raise KeyError('Unknown stop "{}" in the return route'.format(stop_tag.get('nazwa'))) from exc
+    for stop_tag in stops[1]:
+        route_data[stop_tag.get('nazwa')]['codes'].append(stop_tag.get('id'))
 
-    route_data_l = len(route_data) * [None]
-    for k, v in route_data.items():
-        ind = v.pop('index')
-        v['name'] = k
-        route_data_l[ind] = v
+    # Create route data
+    route_l = [{'name': name, 'codes': data['codes']} for name, data in sorted(route_data.items(), key=lambda item: item[1]['index'])]
 
-    return route_data_l
+    return route_l
 
 
 def create_route_stops_data(route_data, stops_data):
+    """ Returns a list of stops
+    Each stops is a dict {'name': name, 'location': center-location, 'radius': radius'}
+    """
     ret_data = []
     for route_stop in route_data:
-        rec = {'name': route_stop['name']}
-        if len(route_stop['codes']) != 2:
-            raise ValueError('Stop "{}" doesn\'t exist in both route versions (or exists more than twice)'.format(route_stop['name']))
-
         s1, s2 = stops_data[route_stop['codes'][0]], stops_data[route_stop['codes'][1]]
         center = ((s1[0] + s2[0]) / 2, (s1[1] + s2[1]) / 2)
 
-        rec['location'] = center
-        rec['radius'] = distance.distance(center, s1)
-
+        rec = {
+            'name': route_stop['name'],
+            'location': center,
+            'radius': distance.distance(center, s1),
+        }
         ret_data.append(rec)
 
     return ret_data
+
+
+def check_if_any_stops_overlap(route):
+    stops = list(route.stop_set.all().order_by('route_index'))
+
+    for ind1 in range(len(stops)):
+        for ind2 in range(ind1+1, len(stops)):
+            stop1, stop2 = stops[ind1], stops[ind2]
+
+            stops_dist = distance.distance(stop1, stop2)
+            stops_combined_range = stop1.radius_m + stop2.radius_m + 2 * settings.STOP_ADD_RADIUS_M
+            if stops_dist <= stops_combined_range:
+                warnings.warn('Stops ({}) and ({}) overlap by {:.2f}m'.format(
+                    stop1, stop2,
+                    stops_combined_range - stops_dist,
+                ))
 
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('line_no')
-        parser.add_argument('-s', '--stop-starting-id', dest='stop_starting_id', type=int, help='Stop starting id')
-        parser.add_argument('-n', '--dont-set-stop-starting-id', dest='no_stop_starting_id', action='store_true', help='Don\'t set stop starting id')
+        parser.add_argument('-r', '--route-id', dest='route_id', type=int, help='Route id')
+        parser.add_argument('-n', '--dont-set-route-id', dest='no_route_id', action='store_true', help='Don\'t set route id')
 
     def handle(self, *args, **kwargs):
         # Parse arguments
         line_no = kwargs['line_no']
-        stop_starting_id = kwargs['stop_starting_id']
-        no_stop_starting_id = kwargs['no_stop_starting_id']
+        route_id = kwargs['route_id']
+        no_route_id = kwargs['no_route_id']
 
-        if no_stop_starting_id and stop_starting_id is not None:
-            raise ValueError('Options -s and -n can\'t be set at the same time')
+        if no_route_id and route_id is not None:
+            raise ValueError('Options -r and -n can\'t be set at the same time')
 
-        # Get stop starting id
-        if no_stop_starting_id:
+        # Get route id
+        if no_route_id:
             reset_auto_increment()
-
         else:
-            if stop_starting_id is None:
+            if route_id is None:
                 try:
-                    stop_starting_id = int(line_no) * ROUTE_STOPS_STEP
+                    route_id = int(line_no)
                 except ValueError:
-                    max_val = Stop.objects.aggregate(max_val=Coalesce(Max('id'), 0))['max_val']
-                    stop_starting_id = NOT_INT_ROUTE_MIN_ID + max(max_val + ROUTE_STOPS_STEP - NOT_INT_ROUTE_MIN_ID, 0) // ROUTE_STOPS_STEP * ROUTE_STOPS_STEP
+                    max_route_id = Route.objects.aggregate(max_val=Coalesce(Max('id'), 0))['max_val']
+                    route_id = max(max_route_id, settings.NOT_INT_ROUTE_MIN_ID) + 1
 
         # Files
         stops_file = '{}/stops.csv'.format(DATA_DIR)
@@ -144,13 +176,14 @@ class Command(BaseCommand):
         # Save data
         with transaction.atomic():
             route = Route.objects.create(
+                id=None if no_route_id else route_id,
                 line=line_no,
             )
             print('Added route {}'.format(route))
 
             for ind, stop in enumerate(route_stops_data):
                 stop = Stop.objects.create(
-                    id=None if no_stop_starting_id else stop_starting_id + ind,
+                    id=None if no_route_id else route_id * settings.ROUTE_STOPS_STEP + ind,
                     route=route,
                     route_index=ind,
                     name=stop['name'],
@@ -160,4 +193,7 @@ class Command(BaseCommand):
                     radius_m=math.ceil(stop['radius']),
                 )
                 print('Added stop {}'.format(stop))
+
+        # Check if any two stops overlap
+        check_if_any_stops_overlap(route)
 

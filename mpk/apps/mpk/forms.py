@@ -41,8 +41,7 @@ class ProcessForm(forms.Form):
             'class': 'form-control input-sm input-font-size-14 width-auto',
         }
 
-        line_choices = [(route.line, route.line.upper()) for route in Route.objects.all()]
-        line_choices.sort(key=line_sort_order)
+        line_choices = sorted([(route.line, route.line.upper()) for route in Route.objects.all()], key=line_sort_order)
         self.fields['line'].choices = line_choices
         self.fields['line'].widget.attrs.update(dropdown_field_attrs)
 
