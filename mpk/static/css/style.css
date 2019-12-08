@@ -73,6 +73,10 @@ td.padding-right-st {
 	padding-right: 20px !important;
 }
 
+.glyphicon-margin {
+	margin-top: 3px !important;
+}
+
 .float-right {
 	float: right;
 }
