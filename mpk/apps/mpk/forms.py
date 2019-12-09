@@ -31,6 +31,7 @@ class ProcessForm(forms.Form):
         self.current_time = datetime.now(settings.LOCAL_TIMEZONE)
         self.current_time_m = self.current_time.replace(second=0, microsecond=0)
         self.current_time_next_m = self.current_time_m + timedelta(minutes=1)
+        self.date_to_is_now = False
 
         # Set widget attributes
         date_field_attrs = {
@@ -51,33 +52,50 @@ class ProcessForm(forms.Form):
         self.fields['date_to'].widget.attrs.update(date_field_attrs)
         self.fields['date_to'].widget.attrs['placeholder'] = 'datetime or "now"'
 
-    def clean(self):
-        # Parse dates
-        date_from_s, date_to_s = self.cleaned_data['date_from'].strip(), self.cleaned_data['date_to'].strip()
+    def clean_date_from(self):
+        s = self.cleaned_data['date_from'].strip()
+
+        prefix, suffix = '-', 'hours'
         try:
-            # To date
-            if date_to_s == 'now':
-                date_to = self.current_time_next_m
+            if s.startswith(prefix) and s.endswith(suffix):
+                offset_h = float(s[len(prefix):-len(suffix)])
+                date_from = timedelta(hours=offset_h)
             else:
-                date_to = settings.LOCAL_TIMEZONE.localize(datetime.strptime(date_to_s, '%Y-%m-%d %H:%M'))
+                date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
 
-            # From date
-            prefix, suffix = '-', 'hours'
-            if date_from_s.startswith(prefix) and date_from_s.endswith(suffix):
-                offset_h = float(date_from_s[len(prefix):-len(suffix)])
-                date_from = date_to - timedelta(hours=offset_h)
-                if date_to_s == 'now':
-                    date_from -= timedelta(minutes=1)
-            else:
-                date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(date_from_s, '%Y-%m-%d %H:%M'))
-
-        except ValueError as exc:
+        except Exception as exc:
             raise ValidationError('Can\'t parse date: {}'.format(exc))
 
-        # Check dates
-        if date_to < date_from:
-            raise ValidationError('Date-to earlier than date-from..')
-        self.cleaned_data['date_from'], self.cleaned_data['date_to'] = date_from, date_to
+        return date_from
 
-        return self.cleaned_data
+    def clean_date_to(self):
+        s = self.cleaned_data['date_to'].strip()
+
+        try:
+            if s == 'now':
+                self.date_to_is_now = True
+                date_to = self.current_time_next_m
+            else:
+                date_to = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
+
+        except Exception as exc:
+            raise ValidationError('Can\'t parse date: {}'.format(exc))
+
+        return date_to
+
+    def clean(self):
+        super().clean()
+
+        # Check dates
+        date_from, date_to = self.cleaned_data.get('date_from'), self.cleaned_data.get('date_to')
+        if date_from is not None and date_to is not None:
+            if isinstance(date_from, timedelta):
+                date_from = date_to - date_from
+                if self.date_to_is_now:
+                    date_from -= timedelta(minutes=1)
+
+            if date_to < date_from:
+                self.add_error(None, 'Date-to earlier than date-from')
+
+        self.cleaned_data['date_from'], self.cleaned_data['date_to'] = date_from, date_to
 
