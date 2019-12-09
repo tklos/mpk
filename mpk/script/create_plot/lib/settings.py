@@ -12,7 +12,7 @@ class Params:
         # Fontsize
         err_fontsize = 11
         title_fontsize = 22
-        bottom_fontsize = 16
+        bottom_fontsize = 14
         left_fontsize = 12
 
         # Plot
