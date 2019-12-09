@@ -45,9 +45,8 @@ class HomeView(FormView):
             settings.MEDIA_ROOT,
             location,
         )
-        plot_fn = '{}.png'.format(location)
+        plot_fn = '{:0>3s}--{}--{}.png'.format(line_no, date_from.strftime('%y%m%d-%H%M'), date_to.strftime('%y%m%d-%H%M'))
         plot_filename = '{}/{}'.format(out_dir, plot_fn)
-        # django_plot_location = '{}/{}/{}'.format(settings.DJANGO_DOWNLOAD_LOCATION, location, plot_fn)
         django_plot_location = '{}/{}/{}'.format(settings.MEDIA_URL, location, plot_fn)
 
         # Process
