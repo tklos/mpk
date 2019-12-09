@@ -31,6 +31,8 @@ class ProcessForm(forms.Form):
         self.current_time = datetime.now(settings.LOCAL_TIMEZONE)
         self.current_time_m = self.current_time.replace(second=0, microsecond=0)
         self.current_time_next_m = self.current_time_m + timedelta(minutes=1)
+
+        self.date_from_timedelta = None  # None or (timedelta_str, timedelta)
         self.date_to_is_now = False
 
         # Set widget attributes
@@ -60,6 +62,7 @@ class ProcessForm(forms.Form):
             if s.startswith(prefix) and s.endswith(suffix):
                 offset_h = float(s[len(prefix):-len(suffix)])
                 date_from = timedelta(hours=offset_h)
+                self.date_from_timedelta = (s, date_from)
             else:
                 date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
 
