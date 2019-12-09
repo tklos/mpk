@@ -62,10 +62,24 @@ class HomeView(FormView):
             logger.debug('Creating out-dir {}'.format(out_dir))
             os.makedirs(out_dir)
 
+            # Create plot
             create_plot(line_no, date_from, date_to, plot_filename)
+
+            # Calculate previous/next plot time ranges
+            plot_length = date_to - date_from if form.date_from_timedelta is None else form.date_from_timedelta[1]
+            prev_plot_from = (date_from - plot_length).strftime('%Y-%m-%d %H:%M') if form.date_from_timedelta is None else form.date_from_timedelta[0]
+            prev_plot_to = date_from.strftime('%Y-%m-%d %H:%M')
+            next_plot_from = date_to.strftime('%Y-%m-%d %H:%M') if form.date_from_timedelta is None else form.date_from_timedelta[0]
+            next_plot_to = (date_to + plot_length).strftime('%Y-%m-%d %H:%M')
+
             context.update({
                 'success': True,
                 'plot_path': django_plot_location,
+                'line': line_no,
+                'prev_plot_from': prev_plot_from,
+                'prev_plot_to': prev_plot_to,
+                'next_plot_from': next_plot_from,
+                'next_plot_to': next_plot_to,
             })
 
             # Mogrify
