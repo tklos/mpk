@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import string
+from datetime import datetime
 
 from django.conf import settings
 from django.shortcuts import render
@@ -35,19 +36,22 @@ class HomeView(FormView):
     def form_valid(self, form):
         from mpk.script.create_plot.create_plot import create_plot
 
+        current_time = datetime.now()
+
         # Processing arguments
         line_no = form.cleaned_data['line']
         date_from, date_to = form.cleaned_data['date_from'], form.cleaned_data['date_to']
 
         # Directory and filename
         location = ''.join(random.choices(string.ascii_letters, k=6))
+        location_ext = '{}-{}'.format(current_time.strftime('%y%m%d-%H%M'), location)
         out_dir = '{}/{}'.format(
             settings.MEDIA_ROOT,
-            location,
+            location_ext,
         )
         plot_fn = '{:0>3s}--{}--{}.png'.format(line_no, date_from.strftime('%y%m%d-%H%M'), date_to.strftime('%y%m%d-%H%M'))
         plot_filename = '{}/{}'.format(out_dir, plot_fn)
-        django_plot_location = '{}/{}/{}'.format(settings.MEDIA_URL, location, plot_fn)
+        django_plot_location = '{}/{}/{}'.format(settings.MEDIA_URL, location_ext, plot_fn)
 
         # Process
         context = self.get_std_context_data()
