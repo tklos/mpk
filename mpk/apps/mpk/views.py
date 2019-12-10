@@ -8,6 +8,8 @@ from django.conf import settings
 from django.shortcuts import render
 from django.views.generic import FormView
 
+from mpk.script.create_plot.create_plot import create_plot
+
 from .forms import ProcessForm
 
 
@@ -34,8 +36,6 @@ class HomeView(FormView):
         return context
 
     def form_valid(self, form):
-        from mpk.script.create_plot.create_plot import create_plot
-
         current_time = datetime.now()
 
         # Processing arguments
