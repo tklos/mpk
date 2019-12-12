@@ -3,6 +3,8 @@ from datetime import timedelta
 
 class Params:
 
+    DIR_UP, DIR_DOWN = 0, 1
+
     def __init__(self):
         # Window
         window_size_p = (1350, 955)

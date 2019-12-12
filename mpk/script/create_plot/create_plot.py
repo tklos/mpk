@@ -53,7 +53,7 @@ def _calculate_xticks_and_labels(date_from_local, date_to_local, params):
 
 
 def _process_vehicle_locations(locations, params):
-    data, gap_data, gap_data_colours = {}, [], []
+    data, gap_data = {}, {}
     for loc in locations:
         stop_ind = loc.current_stop.route_index if loc.is_at_stop else loc.current_stop.route_index + loc.to_next_stop_ratio
 
@@ -66,15 +66,14 @@ def _process_vehicle_locations(locations, params):
             diff = loc.date - d[0][-1]
             if diff > params.max_diff_continuous_data:
                 # Long gap
-                gap_data.append(((mdates.date2num(d[0][-1]), d[1][-1]), (mdates.date2num(loc.date), stop_ind)))
-                gap_data_colours.append(params.line_colours[0 if stop_ind > d[1][-1] else 1])
+                gap_data.setdefault(loc.vehicle_id, []).append([(mdates.date2num(d[0][-1]), d[1][-1]), (mdates.date2num(loc.date), stop_ind)])
                 d[0].append(loc.date - diff / 2)
                 d[1].append(None)
 
             d[0].append(loc.date)
             d[1].append(stop_ind)
 
-    return data, gap_data, gap_data_colours
+    return data, gap_data
 
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
@@ -108,7 +107,12 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Process data
     # Vehicle locations
-    data, gap_data, gap_data_colours = _process_vehicle_locations(locations, params)
+    data, gap_data = _process_vehicle_locations(locations, params)
+
+    # Vehicle directions
+    vehicle_directions = {}
+    for veh_id, d in data.items():
+        vehicle_directions[veh_id] = params.DIR_UP if d[1][-1] > d[1][0] else params.DIR_DOWN
 
     # X axis
     xticks, xticklabels = _calculate_xticks_and_labels(date_from_local, date_to_local, params)
@@ -142,13 +146,14 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     for stop_ind in range(len(stops)):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
 
-    # Plot lines
-    for d in data.values():
-        c_ind = 0 if d[1][-1] > d[1][0] else 1
-        plt.plot(d[0], d[1], color=params.line_colours[c_ind])
+    # Plot data
+    for veh_id, d in data.items():
+        plt.plot(d[0], d[1], color=params.line_colours[vehicle_directions[veh_id]])
 
-    gap_line_h = LineCollection(gap_data, colors=gap_data_colours, ls='--')
-    canvas_h.add_collection(gap_line_h)
+    # Plot gap data
+    for veh_id, d in gap_data.items():
+        gap_line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls='--')
+        canvas_h.add_collection(gap_line_h)
 
     # Title
     title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no.upper())
