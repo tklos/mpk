@@ -94,6 +94,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # Vehicle locations
     locations = route.vehiclelocation_set \
+            .select_related('current_stop') \
             .filter(date__gte=date_from_local, date__lt=date_to_local) \
             .filter(is_processed=True)
 
