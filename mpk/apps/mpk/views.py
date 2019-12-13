@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import string
+import time
 from datetime import datetime
 
 from django.conf import settings
@@ -19,6 +20,10 @@ logger = logging.getLogger('default')
 class HomeView(FormView):
     form_class = ProcessForm
     template_name = 'mpk/home.html'
+
+    def __init__(self, *args, **kwargs):
+        self.start_time = time.time()
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def get_std_context_data():
@@ -85,6 +90,13 @@ class HomeView(FormView):
                 'next_plot_from': next_plot_from,
                 'next_plot_to': next_plot_to,
             })
+
+            # Log processing time
+            total_time = time.time() - self.start_time
+            logger.info('Processing finished   {}; Total time {:.2f}s.'.format(
+                location_ext,
+                total_time,
+            ))
 
             # Mogrify
             # cmd = 'mogrify -alpha off {}'.format(plot_filename)
