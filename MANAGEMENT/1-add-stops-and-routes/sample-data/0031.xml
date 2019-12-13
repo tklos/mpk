@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<linie>
+ <linia nazwa="31" typ="Normalna tramwajowa" wazny_od="07.12.2019" wazny_do="">
+  <wariant id="1" nazwa="STADION WROCŁAW (Królewiecka) - GAJ" obj="k1">
+   <przystanek id="18402" nazwa="STADION WROCŁAW (Królewiecka)" ulica="Pilczycka" cechy="">
+    <czasy>
+     <przystanek numer="0" id="18402" nazwa="STADION WROCŁAW (Królewiecka)" czas="0"/>
+     <przystanek numer="1" id="18404" nazwa="Dworska" czas="1"/>
+     <przystanek numer="2" id="12612" nazwa="Górnicza" czas="2"/>
+     <przystanek numer="3" id="12606" nazwa="Modra" czas="4"/>
+     <przystanek numer="4" id="12604" nazwa="Pilczycka (Anima)" czas="5"/>
+     <przystanek numer="5" id="12602" nazwa="Kolista" czas="6"/>
+     <przystanek numer="6" id="12206" nazwa="Kwiska" czas="11"/>
+     <przystanek numer="7" id="12204" nazwa="Małopanewska" czas="12"/>
+     <przystanek numer="8" id="12202" nazwa="Niedźwiedzia" czas="14"/>
+     <przystanek numer="9" id="10408" nazwa="ZACHODNIA (Stacja kolejowa)" czas="16"/>
+     <przystanek numer="10" id="10406" nazwa="pl. Strzegomski (Muzeum Współczesne)" czas="18"/>
+     <przystanek numer="11" id="10404" nazwa="Młodych Techników" czas="19"/>
+     <przystanek numer="12" id="10402" nazwa="PL. JANA PAWŁA II" czas="21"/>
+     <przystanek numer="13" id="10274" nazwa="pl. Orląt Lwowskich" czas="23"/>
+     <przystanek numer="14" id="10272" nazwa="pl. Legionów" czas="25"/>
+     <przystanek numer="15" id="10270" nazwa="Arkady (Capitol)" czas="27"/>
+     <przystanek numer="10" id="10226" nazwa="DWORZEC GŁÓWNY (Stawowa) ↑" czas="13"/>
+     <przystanek numer="16" id="11001" nazwa="DWORZEC AUTOBUSOWY" czas="30"/>
+     <przystanek numer="17" id="21005" nazwa="Joannitów" czas="32"/>
+     <przystanek numer="18" id="21007" nazwa="Gajowa" czas="33"/>
+     <przystanek numer="19" id="21009" nazwa="Prudnicka" czas="35"/>
+     <przystanek numer="20" id="21011" nazwa="Kamienna" czas="36"/>
+     <przystanek numer="21" id="21023" nazwa="Bardzka" czas="37"/>
+     <przystanek numer="22" id="21025" nazwa="Krynicka" czas="38"/>
+     <przystanek numer="23" id="21027" nazwa="Morwowa" czas="39"/>
+     <przystanek numer="24" id="21029" nazwa="Świeradowska" czas="40"/>
+     <przystanek numer="25" id="21037" nazwa="GAJ" czas="41"/>
+    </czasy>
+   </przystanek>
+  </wariant>
+  <wariant id="2" nazwa="GAJ - STADION WROCŁAW (Królewiecka)" obj="k2">
+   <przystanek id="21030" nazwa="GAJ" ulica="Świeradowska" cechy="">
+    <czasy>
+     <przystanek numer="0" id="21030" nazwa="GAJ" czas="0"/>
+     <przystanek numer="1" id="21028" nazwa="Świeradowska" czas="1"/>
+     <przystanek numer="2" id="21026" nazwa="Morwowa" czas="2"/>
+     <przystanek numer="3" id="21024" nazwa="Krynicka" czas="3"/>
+     <przystanek numer="4" id="21014" nazwa="Bardzka" czas="4"/>
+     <przystanek numer="5" id="21012" nazwa="Kamienna" czas="5"/>
+     <przystanek numer="6" id="21010" nazwa="Prudnicka" czas="6"/>
+     <przystanek numer="7" id="21008" nazwa="Gajowa" czas="8"/>
+     <przystanek numer="8" id="21004" nazwa="Joannitów" czas="9"/>
+     <przystanek numer="9" id="21002" nazwa="DWORZEC AUTOBUSOWY" czas="12"/>
+     <przystanek numer="10" id="10226" nazwa="DWORZEC GŁÓWNY (Stawowa) ↑" czas="13"/>
+     <przystanek numer="11" id="10269" nazwa="Arkady (Capitol)" czas="15"/>
+     <przystanek numer="12" id="10271" nazwa="pl. Legionów" czas="17"/>
+     <przystanek numer="13" id="10273" nazwa="pl. Orląt Lwowskich" czas="19"/>
+     <przystanek numer="14" id="10401" nazwa="PL. JANA PAWŁA II" czas="21"/>
+     <przystanek numer="15" id="10403" nazwa="Młodych Techników" czas="23"/>
+     <przystanek numer="16" id="10405" nazwa="pl. Strzegomski (Muzeum Współczesne)" czas="24"/>
+     <przystanek numer="17" id="10407" nazwa="ZACHODNIA (Stacja kolejowa)" czas="26"/>
+     <przystanek numer="18" id="12201" nazwa="Niedźwiedzia" czas="28"/>
+     <przystanek numer="19" id="12203" nazwa="Małopanewska" czas="29"/>
+     <przystanek numer="20" id="12205" nazwa="Kwiska" czas="31"/>
+     <przystanek numer="21" id="12601" nazwa="Kolista" czas="36"/>
+     <przystanek numer="22" id="12603" nazwa="Pilczycka (Anima)" czas="37"/>
+     <przystanek numer="23" id="12605" nazwa="Modra" czas="38"/>
+     <przystanek numer="24" id="12611" nazwa="Górnicza" czas="39"/>
+     <przystanek numer="25" id="18403" nazwa="Dworska" czas="41"/>
+     <przystanek numer="26" id="18401" nazwa="STADION WROCŁAW (Królewiecka)" czas="42"/>
+    </czasy>
+   </przystanek>
+  </wariant>
+ </linia>
+</linie>
