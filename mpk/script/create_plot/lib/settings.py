@@ -3,6 +3,8 @@ from datetime import timedelta
 
 class Params:
 
+    DIR_UP, DIR_DOWN = 0, 1
+
     def __init__(self):
         # Window
         window_size_p = (1350, 955)
@@ -12,7 +14,7 @@ class Params:
         # Fontsize
         err_fontsize = 11
         title_fontsize = 22
-        bottom_fontsize = 16
+        bottom_fontsize = 14
         left_fontsize = 12
 
         # Plot
