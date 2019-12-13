@@ -73,11 +73,41 @@ td.padding-right-st {
 	padding-right: 20px !important;
 }
 
+.glyphicon-margin {
+	margin-top: 3px !important;
+}
+
 .float-right {
 	float: right;
 }
 
 .page-margin-bottom {
 	margin-bottom: 100px;
+}
+
+.plot-href {
+	margin-top: 5px;
+}
+
+.prev-plot {
+	display: inline-block;
+	float: left !important;
+	margin-left: 100px;
+}
+
+.next-plot {
+	display: inline-block;
+	float: right !important;
+	margin-right: 100px;
+}
+
+@media (max-width:767px) {
+	.prev-plot {
+		margin-left: 10px;
+	}
+
+	.next-plot {
+		margin-right: 10px;
+	}
 }
 

@@ -21,11 +21,13 @@
 					<td>
 						<table>
 							<tr>
-								<td class="padding-b-2"><div data-toggle="tooltip" title='yyyy-mm-dd HH:MM or offset from date-to ("-(x)hours")'><label>From:</label></div></td>
+								<td class="padding-b-2 padding-r-5"><div data-toggle="tooltip" title='yyyy-mm-dd HH:MM or offset from date-to ("-(x)hours")'><span class="glyphicon glyphicon-info-sign glyphicon-margin" aria-hidden="true"></span></div></td>
+								<td class="padding-b-2"><label>From:</label></td>
 								<td class="padding-left-st padding-b-2">{{form.date_from}}</td>
 							</tr>
 							<tr>
-								<td><div data-toggle="tooltip" title='yyyy-mm-dd HH:MM or "now"'><label>To:</label></div></td>
+								<td class="padding-b-2 padding-r-5"><div data-toggle="tooltip" title='yyyy-mm-dd HH:MM or "now"'><span class="glyphicon glyphicon-info-sign glyphicon-margin" aria-hidden="true"></span></div></td>
+								<td><label>To:</label></td>
 								<td class="padding-left-st">{{form.date_to}}</td>
 							</tr>
 						</table>
@@ -48,8 +50,25 @@
 	<div class="mpk-result">
 		{% if was_processed %}
 			{% if success %}
+				<div>
+					<form method="post" action="{% url 'mpk:home' %}">
+						{% csrf_token %}
+						<input type="hidden" name="line" value="{{line}}"/>
+						<input type="hidden" name="date_from" value="{{prev_plot_from}}"/>
+						<input type="hidden" name="date_to" value="{{prev_plot_to}}"/>
+						<input type="submit" value="❮ Previous" class="btn btn-default prev-plot"/>
+					</form>
+					<form method="post" action="{% url 'mpk:home' %}">
+						{% csrf_token %}
+						<input type="hidden" name="line" value="{{line}}"/>
+						<input type="hidden" name="date_from" value="{{next_plot_from}}"/>
+						<input type="hidden" name="date_to" value="{{next_plot_to}}"/>
+						<input type="submit" value="Next ❯" class="btn btn-default next-plot"/>
+					</form>
+				</div>
+
 				<a href="{{plot_path}}" target="_blank">
-					<img src="{{plot_path}}" style="width: 100%"/>
+					<img src="{{plot_path}}" class="plot-href" style="width: 100%"/>
 				</a>
 			{% else %}
 				<span class="error text-danger">Processing failed:<br/>{{error}}</span>

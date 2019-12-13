@@ -1,4 +1,9 @@
 
+ ** v0.3.0   13.12.2019
+    - Improve DB performance
+    - Add previous/next plot buttons
+
+
  ** v0.2.0   08.12.2019
     - Additional checks when adding route
     - When vehicle is at multiple stops, choose the nearest one
