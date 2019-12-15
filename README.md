@@ -13,7 +13,7 @@
  * Clone the repository
  * Create virtual environment
  * Create `wsgi.py`, `manage.py` and files in `mpk/settings/` based on their `.template` versions
- * Update crontab based on `MANAGEMENT/0-crontab/INFO-crontab`
+ * Update crontab based on `MANAGEMENT/0-crontab`
  * Add routes as described in the following section
 
 
