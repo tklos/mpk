@@ -78,8 +78,10 @@ def _process_vehicle_locations(locations, params):
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
     # Check params
-    if date_from_local.tzinfo is None or date_to_local.tzinfo is None:
+    if date_from_local.tzinfo is None or date_to_local.tzinfo != date_from_local.tzinfo:
         raise ValueError('Dates have to be timezone-aware')
+
+    timezone_local = date_from_local.tzinfo
 
     ## Get data
     # Route
@@ -109,6 +111,15 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     ## Process data
     # Vehicle locations
     data, gap_data = _process_vehicle_locations(locations, params)
+
+    # No locations
+    is_request_too_early, earliest_data = False, None
+    if not data and not gap_data:
+        earliest_data = route.vehiclelocation_set \
+                .order_by('date') \
+                .first()
+        if earliest_data is None or date_from_local < earliest_data.date:
+            is_request_too_early = True
 
     # Vehicle directions
     vehicle_directions = {}
@@ -155,6 +166,14 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     for veh_id, d in gap_data.items():
         gap_line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls='--')
         canvas_h.add_collection(gap_line_h)
+
+    # Print message if request too early
+    if is_request_too_early:
+        if not earliest_data:
+            no_data_msg = 'No data collected so far for line {}'.format(line_no)
+        else:
+            no_data_msg = 'The earliest data available for line {}\nis at {}'.format(line_no, earliest_data.date.astimezone(timezone_local).strftime('%Y-%m-%d %H:%M:%S'))
+        plt.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
 
     # Title
     title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no.upper())
