@@ -16,6 +16,7 @@ class Params:
         title_fontsize = 22
         bottom_fontsize = 14
         left_fontsize = 12
+        no_data_fontsize = 20
 
         # Plot
         stops_margin_p = 10
@@ -58,6 +59,7 @@ class Params:
         self.title_fontsize = title_fontsize
         self.bottom_fontsize = bottom_fontsize
         self.left_fontsize = left_fontsize
+        self.no_data_fontsize = no_data_fontsize
 
         # Plot
         self.stops_margin_n = stops_margin_p / canvas_height_p
