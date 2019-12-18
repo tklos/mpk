@@ -59,6 +59,12 @@ def process_vehicle(el, routes_d, date_created):
     loc = (lat, lng)
     route, stops = routes_d[line]
 
+    # Check if location is valid
+    # Example of incorrect coordinates: {'name': 'd', 'type': 'bus', 'y': 2634.2861, 'x': 6429.7183, 'k': 14429515}
+    if not settings.MIN_LAT <= lat <= settings.MAX_LAT or not settings.MIN_LONG <= lng <= settings.MAX_LONG:
+        logger.error('Invalid location: {}'.format(el))
+        return
+
     # Calculate distance
     stop_dist = [distance.distance(loc, stop) for stop in stops]
     logger.debug(stop_dist)
@@ -179,9 +185,11 @@ class Command(BaseCommand):
         # There might be duplicate vehicle ids in the data,
         # e.g. {'name': '3', 'type': 'tram', 'y': 16.98013, 'x': 51.12673, 'k': 14339663} and {'name': '3', 'type': 'tram', 'y': 17.03928, 'x': 51.107746, 'k': 14339663}
         # In that case, remove all duplicate records
+        # (a) Convert data to a dict of vehicle-id: list-of-locations
         data_d = {}
         for d in data:
             data_d.setdefault(d['k'], []).append(d)
+        # (b) Remove duplicates
         for vehicle_id in list(data_d.keys()):
             if len(data_d[vehicle_id]) != 1:
                 logger.error('Duplicate vehicle id {}: {}'.format(vehicle_id, data_d[vehicle_id]))
