@@ -149,7 +149,11 @@ NOT_INT_ROUTE_MIN_ID = 1000
 ROUTE_STOPS_STEP = 100
 
 
-# Location consts
+## Location consts
+# Valid latitude and longitude ranges
+MIN_LAT, MAX_LAT = 51., 51.2
+MIN_LONG, MAX_LONG = 16.8, 17.2
+
 # Distance in kilometers between current position and the one one degree east/west or north/south
 ONE_DEG_X_KM =  69.977  # 2 * PI * EARTH_RADIUS * sin(radians(90-lat)) / 360, (EARTH_RADIUS=6371, lat=51)
 ONE_DEG_Y_KM = 111.194  # 2 * PI * EARTH_RADIUS / 360
