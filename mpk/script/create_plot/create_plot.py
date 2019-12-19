@@ -53,27 +53,57 @@ def _calculate_xticks_and_labels(date_from_local, date_to_local, params):
 
 
 def _process_vehicle_locations(locations, params):
-    data, gap_data = {}, {}
-    for loc in locations:
-        stop_ind = loc.current_stop.route_index if loc.is_at_stop else loc.current_stop.route_index + loc.to_next_stop_ratio
+    """
+    Returns a dict with 'data', 'gap-data' and 'invalid-data' keys. Each value is a dict of vehicle_id: list-of-lines,
+    where line is a list of two-element tuples (date, stop-idx).
+    Dates are in matplotlib date format.
+    These structures are ready to be used to create LineCollection objects
+    """
+    max_diff_continuous_data_s = params.max_diff_continuous_data_s / 24 / 3600
 
-        d = data.get(loc.vehicle_id, None)
-        if d is None:
-            # First data point
-            data[loc.vehicle_id] = ([loc.date], [stop_ind])
+    data, gap_data, invalid_data = {}, {}, {}
+    prev_vehicle_id, prev_point, num_unprocessed_in_a_row = None, None, 0
+    for loc in locations:
+        date_ = mdates.date2num(loc.date)
+        vehicle_id = loc.vehicle_id
+
+        if loc.is_processed:
+            stop_ind = loc.current_stop.route_index if loc.is_at_stop else loc.current_stop.route_index + loc.to_next_stop_ratio
+            point = (date_, stop_ind)
+
+            if prev_vehicle_id != vehicle_id:
+                # First data point
+                data[vehicle_id] = [[]]
+                num_unprocessed_in_a_row = 0
+
+            else:
+                diff = date_ - prev_point[0]
+                if diff > max_diff_continuous_data_s:
+                    # Data gap or invalid data
+                    num_exp_pts = round(diff * 24 * 3600 / params.sampling_interval_s) - 1  # Expected number of points
+                    dest_data = invalid_data if num_unprocessed_in_a_row > num_exp_pts / 2 else gap_data
+                    dest_data.setdefault(loc.vehicle_id, []).append([prev_point, point])
+                    data[vehicle_id][0].append((date_ - diff / 2, None))
+
+            # Add this point
+            data[vehicle_id][0].append(point)
+
+            # Set last processed point
+            prev_vehicle_id, prev_point, num_unprocessed_in_a_row = vehicle_id, point, 0
 
         else:
-            diff = loc.date - d[0][-1]
-            if diff > params.max_diff_continuous_data:
-                # Long gap
-                gap_data.setdefault(loc.vehicle_id, []).append([(mdates.date2num(d[0][-1]), d[1][-1]), (mdates.date2num(loc.date), stop_ind)])
-                d[0].append(loc.date - diff / 2)
-                d[1].append(None)
+            ## Unprocessed location
+            # New vehicle id; ignore all unprocessed locations before the first processed
+            if prev_vehicle_id != vehicle_id:
+                continue
 
-            d[0].append(loc.date)
-            d[1].append(stop_ind)
+            num_unprocessed_in_a_row += 1
 
-    return data, gap_data
+    return {
+        'data': data,
+        'gap-data': gap_data,
+        'invalid-data': invalid_data,
+    }
 
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
@@ -98,7 +128,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     locations = route.vehiclelocation_set \
             .select_related('current_stop') \
             .filter(date__gte=date_from_local, date__lt=date_to_local) \
-            .filter(is_processed=True)
+            .order_by('vehicle_id', 'date')
 
     ## Prepare
     # Settings
@@ -110,11 +140,11 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Process data
     # Vehicle locations
-    data, gap_data = _process_vehicle_locations(locations, params)
+    data = _process_vehicle_locations(locations, params)
 
     # No locations
     is_request_too_early, earliest_data = False, None
-    if not data and not gap_data:
+    if not any([data['data'], data['gap-data'], data['invalid-data']]):
         earliest_data = route.vehiclelocation_set \
                 .order_by('date') \
                 .first()
@@ -123,8 +153,8 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # Vehicle directions
     vehicle_directions = {}
-    for veh_id, d in data.items():
-        vehicle_directions[veh_id] = params.DIR_UP if d[1][-1] > d[1][0] else params.DIR_DOWN
+    for veh_id, d in data['data'].items():
+        vehicle_directions[veh_id] = params.DIR_UP if d[0][-1][1] > d[0][0][1] else params.DIR_DOWN
 
     # X axis
     xticks, xticklabels = _calculate_xticks_and_labels(date_from_local, date_to_local, params)
@@ -159,13 +189,19 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
 
     # Plot data
-    for veh_id, d in data.items():
-        plt.plot(d[0], d[1], color=params.line_colours[vehicle_directions[veh_id]])
+    for veh_id, d in data['data'].items():
+        line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], zorder=5)
+        canvas_h.add_collection(line_h)
 
     # Plot gap data
-    for veh_id, d in gap_data.items():
-        gap_line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls='--')
-        canvas_h.add_collection(gap_line_h)
+    for veh_id, d in data['gap-data'].items():
+        line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls=(1, (1, 3)), zorder=5)
+        canvas_h.add_collection(line_h)
+
+    # Plot invalid data
+    for veh_id, d in data['invalid-data'].items():
+        line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls=(3, (3, 2)), zorder=5)
+        canvas_h.add_collection(line_h)
 
     # Print message if request too early
     if is_request_too_early:
