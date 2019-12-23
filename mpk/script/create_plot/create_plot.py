@@ -52,34 +52,96 @@ def _calculate_xticks_and_labels(date_from_local, date_to_local, params):
     return [], []
 
 
-def _process_vehicle_locations(locations, params):
-    data, gap_data = {}, {}
-    for loc in locations:
-        stop_ind = loc.current_stop.route_index if loc.is_at_stop else loc.current_stop.route_index + loc.to_next_stop_ratio
+def _process_vehicle_locations(locations, num_stops, params):
+    """
+    Returns a dict with 'data', 'gap-data' and 'invalid-data' keys. Each value is a dict of vehicle_id: list-of-lines,
+    where line is a list of two-element tuples (date, stop-idx).
+    Dates are in matplotlib date format.
+    These structures are ready to be used to create LineCollection objects
+    """
+    max_diff_continuous_data = params.max_diff_continuous_data_s / 24 / 3600
+    max_length_data_gap = params.max_length_data_gap_h / 24
 
-        d = data.get(loc.vehicle_id, None)
-        if d is None:
-            # First data point
-            data[loc.vehicle_id] = ([loc.date], [stop_ind])
+    data, gap_data, invalid_data = {}, {}, {}
+    prev_vehicle_id, prev_point, num_unprocessed_in_a_row = None, None, 0
+    for loc in locations:
+        date_ = mdates.date2num(loc.date)
+        vehicle_id = loc.vehicle_id
+
+        if loc.is_processed:
+            stop_ind = loc.current_stop.route_index if loc.is_at_stop else loc.current_stop.route_index + loc.to_next_stop_ratio
+            point = (date_, stop_ind)
+
+            if prev_vehicle_id != vehicle_id:
+                # First data point
+                data[vehicle_id] = [[]]
+                num_unprocessed_in_a_row = 0
+
+            else:
+                # Not the first data point
+                diff = date_ - prev_point[0]
+                if diff > max_diff_continuous_data:
+                    # Data gap or invalid data
+                    num_exp_pts = round(diff * 24 * 3600 / params.sampling_interval_s) - 1  # Expected number of points
+                    if num_unprocessed_in_a_row > num_exp_pts / 2:
+                        # Invalid data
+                        dest_data = invalid_data
+                    else:
+                        # Data gap
+                        dest_data = gap_data
+
+                        ## Heuristics for not plotting data gap when reusing vehicle id
+                        # Case 1: gap longer than params.max_length_data_gap hours
+                        if diff > max_length_data_gap:
+                            dest_data = None
+
+                        # Case 2: gap from almost the first stop to almost the last one
+                        prev_stop_ind = prev_point[1]
+                        min_stop_ind, max_stop_ind = min(prev_stop_ind, stop_ind), max(prev_stop_ind, stop_ind)
+                        if min_stop_ind <= 2 and max_stop_ind >= num_stops-3:
+                            dest_data = None
+
+                    if dest_data is None:
+                        # Break this vehicle data in two and don't plot line between the two parts
+                        new_vehicle_id = str(vehicle_id)
+                        while new_vehicle_id in data:
+                            new_vehicle_id = '{}_'.format(new_vehicle_id)
+
+                        data[new_vehicle_id] = data[vehicle_id]
+                        data[vehicle_id] = [[]]
+
+                    else:
+                        # Plot gap/invalid data line
+                        dest_data.setdefault(loc.vehicle_id, []).append([prev_point, point])
+                        data[vehicle_id][0].append((date_ - diff / 2, None))
+
+            # Add this point
+            data[vehicle_id][0].append(point)
+
+            # Set last processed point
+            prev_vehicle_id, prev_point, num_unprocessed_in_a_row = vehicle_id, point, 0
 
         else:
-            diff = loc.date - d[0][-1]
-            if diff > params.max_diff_continuous_data:
-                # Long gap
-                gap_data.setdefault(loc.vehicle_id, []).append([(mdates.date2num(d[0][-1]), d[1][-1]), (mdates.date2num(loc.date), stop_ind)])
-                d[0].append(loc.date - diff / 2)
-                d[1].append(None)
+            # Unprocessed location
+            if prev_vehicle_id != vehicle_id:
+                # New vehicle id; ignore all unprocessed locations before the first processed
+                continue
 
-            d[0].append(loc.date)
-            d[1].append(stop_ind)
+            num_unprocessed_in_a_row += 1
 
-    return data, gap_data
+    return {
+        'data': data,
+        'gap-data': gap_data,
+        'invalid-data': invalid_data,
+    }
 
 
 def create_plot(line_no, date_from_local, date_to_local, out_filename):
     # Check params
-    if date_from_local.tzinfo is None or date_to_local.tzinfo is None:
+    if date_from_local.tzinfo is None or date_to_local.tzinfo != date_from_local.tzinfo:
         raise ValueError('Dates have to be timezone-aware')
+
+    timezone_local = date_from_local.tzinfo
 
     ## Get data
     # Route
@@ -96,7 +158,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     locations = route.vehiclelocation_set \
             .select_related('current_stop') \
             .filter(date__gte=date_from_local, date__lt=date_to_local) \
-            .filter(is_processed=True)
+            .order_by('vehicle_id', 'date')
 
     ## Prepare
     # Settings
@@ -108,12 +170,21 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Process data
     # Vehicle locations
-    data, gap_data = _process_vehicle_locations(locations, params)
+    data = _process_vehicle_locations(locations, num_stops, params)
+
+    # No locations
+    is_request_too_early, earliest_data = False, None
+    if not any([data['data'], data['gap-data'], data['invalid-data']]):
+        earliest_data = route.vehiclelocation_set \
+                .order_by('date') \
+                .first()
+        if earliest_data is None or date_from_local < earliest_data.date:
+            is_request_too_early = True
 
     # Vehicle directions
     vehicle_directions = {}
-    for veh_id, d in data.items():
-        vehicle_directions[veh_id] = params.DIR_UP if d[1][-1] > d[1][0] else params.DIR_DOWN
+    for veh_id, d in data['data'].items():
+        vehicle_directions[veh_id] = params.DIR_UP if d[0][-1][1] > d[0][0][1] else params.DIR_DOWN
 
     # X axis
     xticks, xticklabels = _calculate_xticks_and_labels(date_from_local, date_to_local, params)
@@ -148,13 +219,22 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
 
     # Plot data
-    for veh_id, d in data.items():
-        plt.plot(d[0], d[1], color=params.line_colours[vehicle_directions[veh_id]])
+    for data_type in ['data', 'gap-data', 'invalid-data']:
+        this_line_params = params.line_params[data_type]
+        line_data, colours = [], []
+        for veh_id, d in data[data_type].items():
+            line_data.extend(d)
+            colours.extend([params.line_colours[vehicle_directions[veh_id]]] * len(d))
+        line_h = LineCollection(line_data, colors=colours, ls=this_line_params['ls'], zorder=this_line_params['zorder'])
+        canvas_h.add_collection(line_h, autolim=False)
 
-    # Plot gap data
-    for veh_id, d in gap_data.items():
-        gap_line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls='--')
-        canvas_h.add_collection(gap_line_h)
+    # Print message if request too early
+    if is_request_too_early:
+        if not earliest_data:
+            no_data_msg = 'No data collected so far for line {}'.format(line_no)
+        else:
+            no_data_msg = 'The earliest data available for line {}\nis at {}'.format(line_no, earliest_data.date.astimezone(timezone_local).strftime('%Y-%m-%d %H:%M:%S'))
+        plt.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
 
     # Title
     title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no.upper())

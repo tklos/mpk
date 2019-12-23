@@ -16,10 +16,13 @@ class Params:
         title_fontsize = 22
         bottom_fontsize = 14
         left_fontsize = 12
+        no_data_fontsize = 20
 
         # Plot
         stops_margin_p = 10
-        max_diff_continuous_data = timedelta(seconds=30)
+        sampling_interval_s = 20  # Data collections interval, as specified in crontab
+        max_diff_continuous_data_s = 50  # If gap longer than this value, show as gap
+        max_length_data_gap_h = 4
         line_colours = ['C0', 'C1']
         title_top_margin_p = 12
         xticks_intervals = [
@@ -27,6 +30,11 @@ class Params:
                 timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
         ]
         max_num_xticks = 9
+        line_params = {
+            'data': {'ls': '-', 'zorder': 5.},
+            'gap-data': {'ls': (1, (1, 3)), 'zorder': 5.2},
+            'invalid-data': {'ls': (3, (3, 2)), 'zorder': 5.1},
+        }
 
 
         ## Processing
@@ -58,14 +66,18 @@ class Params:
         self.title_fontsize = title_fontsize
         self.bottom_fontsize = bottom_fontsize
         self.left_fontsize = left_fontsize
+        self.no_data_fontsize = no_data_fontsize
 
         # Plot
         self.stops_margin_n = stops_margin_p / canvas_height_p
-        self.max_diff_continuous_data = max_diff_continuous_data
+        self.sampling_interval_s = sampling_interval_s
+        self.max_diff_continuous_data_s = max_diff_continuous_data_s
+        self.max_length_data_gap_h = max_length_data_gap_h
         self.line_colours = line_colours
         self.title_top_margin_n = title_top_margin_n
         self.xticks_intervals = xticks_intervals
         self.max_num_xticks = max_num_xticks
+        self.line_params = line_params
 
 
         ## Check params
