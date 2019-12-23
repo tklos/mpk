@@ -11,6 +11,11 @@ label {
 	margin-bottom: 30px;
 }
 
+.description {
+	margin-bottom: 25px;
+}
+
+
 
 /* Table */
 table.table-no-border > tbody > tr > td, table.table-no-border > tbody > tr > th {

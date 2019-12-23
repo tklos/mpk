@@ -1,10 +1,42 @@
 # Stringline plots for buses and trams in Wrocław
 
-
-
 ## How it works
 
+### Getting data
+
+Miejskie Przedsiębiorstwo Komunikacyjne &mdash; the transportation company in Wrocław (<http://mpk.wroc.pl/>) provides positions of their buses and trams by querying their API endpoint, e.g.:
+
+```bash
+$ curl http://pasazer.mpk.wroc.pl/position.php --data 'busList[][]=8&busList[][]=31'
+[
+    {"name":"31","type":"tram","y":17.01899,"x":51.09238,"k":14482003},
+    {"name":"31","type":"tram","y":16.959703,"x":51.140003,"k":14481968},
+    {"name":"8","type":"tram","y":17.038694,"x":51.108288,"k":14483257},
+    ...
+]
+```
+
+MPK also provides GPS coordinates of bus/tram stops and list of stops per route.
+
+
+### Processing
+
+The location data is converted into the position along the route, i.e. last visited stop and percentage of distance covered to the next one. Data are collected a couple of times per minute and saved in the database.
+
+
+### Data visualisation
+
+provided by a Django app, also on <https://mpk.tk.usermd.net/>.
+
+
 ### Sample results
+
+ * **Normal data**
+![Normal data](readme-data/normal.png)
+
+ * **Some delays**
+![Some delays](readme-data/delays.png)
+
 
 
 ## Installation
