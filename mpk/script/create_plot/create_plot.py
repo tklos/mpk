@@ -52,14 +52,15 @@ def _calculate_xticks_and_labels(date_from_local, date_to_local, params):
     return [], []
 
 
-def _process_vehicle_locations(locations, params):
+def _process_vehicle_locations(locations, num_stops, params):
     """
     Returns a dict with 'data', 'gap-data' and 'invalid-data' keys. Each value is a dict of vehicle_id: list-of-lines,
     where line is a list of two-element tuples (date, stop-idx).
     Dates are in matplotlib date format.
     These structures are ready to be used to create LineCollection objects
     """
-    max_diff_continuous_data_s = params.max_diff_continuous_data_s / 24 / 3600
+    max_diff_continuous_data = params.max_diff_continuous_data_s / 24 / 3600
+    max_length_data_gap = params.max_length_data_gap_h / 24
 
     data, gap_data, invalid_data = {}, {}, {}
     prev_vehicle_id, prev_point, num_unprocessed_in_a_row = None, None, 0
@@ -77,13 +78,42 @@ def _process_vehicle_locations(locations, params):
                 num_unprocessed_in_a_row = 0
 
             else:
+                # Not the first data point
                 diff = date_ - prev_point[0]
-                if diff > max_diff_continuous_data_s:
+                if diff > max_diff_continuous_data:
                     # Data gap or invalid data
                     num_exp_pts = round(diff * 24 * 3600 / params.sampling_interval_s) - 1  # Expected number of points
-                    dest_data = invalid_data if num_unprocessed_in_a_row > num_exp_pts / 2 else gap_data
-                    dest_data.setdefault(loc.vehicle_id, []).append([prev_point, point])
-                    data[vehicle_id][0].append((date_ - diff / 2, None))
+                    if num_unprocessed_in_a_row > num_exp_pts / 2:
+                        # Invalid data
+                        dest_data = invalid_data
+                    else:
+                        # Data gap
+                        dest_data = gap_data
+
+                        ## Heuristics for not plotting data gap when reusing vehicle id
+                        # Case 1: gap longer than params.max_length_data_gap hours
+                        if diff > max_length_data_gap:
+                            dest_data = None
+
+                        # Case 2: gap from almost the first stop to almost the last one
+                        prev_stop_ind = prev_point[1]
+                        min_stop_ind, max_stop_ind = min(prev_stop_ind, stop_ind), max(prev_stop_ind, stop_ind)
+                        if min_stop_ind <= 2 and max_stop_ind >= num_stops-3:
+                            dest_data = None
+
+                    if dest_data is None:
+                        # Break this vehicle data in two and don't plot line between the two parts
+                        new_vehicle_id = str(vehicle_id)
+                        while new_vehicle_id in data:
+                            new_vehicle_id = '{}_'.format(new_vehicle_id)
+
+                        data[new_vehicle_id] = data[vehicle_id]
+                        data[vehicle_id] = [[]]
+
+                    else:
+                        # Plot gap/invalid data line
+                        dest_data.setdefault(loc.vehicle_id, []).append([prev_point, point])
+                        data[vehicle_id][0].append((date_ - diff / 2, None))
 
             # Add this point
             data[vehicle_id][0].append(point)
@@ -92,9 +122,9 @@ def _process_vehicle_locations(locations, params):
             prev_vehicle_id, prev_point, num_unprocessed_in_a_row = vehicle_id, point, 0
 
         else:
-            ## Unprocessed location
-            # New vehicle id; ignore all unprocessed locations before the first processed
+            # Unprocessed location
             if prev_vehicle_id != vehicle_id:
+                # New vehicle id; ignore all unprocessed locations before the first processed
                 continue
 
             num_unprocessed_in_a_row += 1
@@ -140,7 +170,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Process data
     # Vehicle locations
-    data = _process_vehicle_locations(locations, params)
+    data = _process_vehicle_locations(locations, num_stops, params)
 
     # No locations
     is_request_too_early, earliest_data = False, None

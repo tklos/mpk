@@ -22,6 +22,7 @@ class Params:
         stops_margin_p = 10
         sampling_interval_s = 20  # Data collections interval, as specified in crontab
         max_diff_continuous_data_s = 50  # If gap longer than this value, show as gap
+        max_length_data_gap_h = 4
         line_colours = ['C0', 'C1']
         title_top_margin_p = 12
         xticks_intervals = [
@@ -66,6 +67,7 @@ class Params:
         self.stops_margin_n = stops_margin_p / canvas_height_p
         self.sampling_interval_s = sampling_interval_s
         self.max_diff_continuous_data_s = max_diff_continuous_data_s
+        self.max_length_data_gap_h = max_length_data_gap_h
         self.line_colours = line_colours
         self.title_top_margin_n = title_top_margin_n
         self.xticks_intervals = xticks_intervals
