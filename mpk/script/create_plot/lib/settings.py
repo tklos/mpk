@@ -30,6 +30,11 @@ class Params:
                 timedelta(hours=1), timedelta(hours=2), timedelta(hours=4), timedelta(hours=6), timedelta(hours=12),
         ]
         max_num_xticks = 9
+        line_params = {
+            'data': {'ls': '-', 'zorder': 5.},
+            'gap-data': {'ls': (1, (1, 3)), 'zorder': 5.2},
+            'invalid-data': {'ls': (3, (3, 2)), 'zorder': 5.1},
+        }
 
 
         ## Processing
@@ -72,6 +77,7 @@ class Params:
         self.title_top_margin_n = title_top_margin_n
         self.xticks_intervals = xticks_intervals
         self.max_num_xticks = max_num_xticks
+        self.line_params = line_params
 
 
         ## Check params
