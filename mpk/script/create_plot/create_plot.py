@@ -219,19 +219,14 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
 
     # Plot data
-    for veh_id, d in data['data'].items():
-        line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], zorder=5)
-        canvas_h.add_collection(line_h)
-
-    # Plot gap data
-    for veh_id, d in data['gap-data'].items():
-        line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls=(1, (1, 3)), zorder=5)
-        canvas_h.add_collection(line_h)
-
-    # Plot invalid data
-    for veh_id, d in data['invalid-data'].items():
-        line_h = LineCollection(d, colors=params.line_colours[vehicle_directions[veh_id]], ls=(3, (3, 2)), zorder=5)
-        canvas_h.add_collection(line_h)
+    for data_type in ['data', 'gap-data', 'invalid-data']:
+        this_line_params = params.line_params[data_type]
+        line_data, colours = [], []
+        for veh_id, d in data[data_type].items():
+            line_data.extend(d)
+            colours.extend([params.line_colours[vehicle_directions[veh_id]]] * len(d))
+        line_h = LineCollection(line_data, colors=colours, ls=this_line_params['ls'], zorder=this_line_params['zorder'])
+        canvas_h.add_collection(line_h, autolim=False)
 
     # Print message if request too early
     if is_request_too_early:
