@@ -1,4 +1,9 @@
 
+ ** v0.4.0   23.12.2019
+    - Improve plotting data gaps
+    - Remove old media files
+
+
  ** v0.3.0   13.12.2019
     - Improve DB performance
     - Add previous/next plot buttons
