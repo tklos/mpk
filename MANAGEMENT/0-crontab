@@ -4,12 +4,16 @@ PYTHONIOENCODING=UTF-8
 DJANGO_PYTHON_PATH=...
 DJANGO_MANAGE_PATH=...
 MEDIA_DIR=...
+DB_ARCHIVE_DIR=...
 
 
 # Get vehicle locations
 * * * * * $DJANGO_PYTHON_PATH $DJANGO_MANAGE_PATH get_locations
 * * * * * sleep 20 && $DJANGO_PYTHON_PATH $DJANGO_MANAGE_PATH get_locations
 * * * * * sleep 40 && $DJANGO_PYTHON_PATH $DJANGO_MANAGE_PATH get_locations
+
+# Archive old vehicle locations
+10 2 * * * $DJANGO_PYTHON_PATH $DJANGO_MANAGE_PATH archive_old_locations --keep-days 60 --out-dir $DB_ARCHIVE_DIR
 
 # Clean old media
 10 1 * * * find $MEDIA_DIR -type d -maxdepth 1 -mtime +14 | xargs -L100 rm -r
