@@ -93,12 +93,22 @@ class ProcessForm(forms.Form):
         date_from, date_to = self.cleaned_data.get('date_from'), self.cleaned_data.get('date_to')
         if date_from is not None and date_to is not None:
             if isinstance(date_from, timedelta):
-                date_from = date_to - date_from
+                try:
+                    date_from = date_to - date_from
+                except Exception as exc:
+                    raise ValidationError('Can\'t create date-from: {}'.format(exc))
+
                 if self.date_to_is_now:
                     date_from -= timedelta(minutes=1)
 
             if date_to < date_from:
                 self.add_error(None, 'Date-to earlier than date-from')
+
+            max_plot_interval = settings.MAX_PLOT_INTERVAL
+            if self.date_to_is_now:
+                max_plot_interval += timedelta(minutes=1)
+            if date_to - date_from > max_plot_interval:
+                self.add_error(None, 'Plot interval is larger than maximum allowed {} hours'.format(settings.MAX_PLOT_INTERVAL // timedelta(hours=1)))
 
         self.cleaned_data['date_from'], self.cleaned_data['date_to'] = date_from, date_to
 
