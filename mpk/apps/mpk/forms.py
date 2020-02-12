@@ -104,5 +104,11 @@ class ProcessForm(forms.Form):
             if date_to < date_from:
                 self.add_error(None, 'Date-to earlier than date-from')
 
+            max_plot_interval = settings.MAX_PLOT_INTERVAL
+            if self.date_to_is_now:
+                max_plot_interval += timedelta(minutes=1)
+            if date_to - date_from > max_plot_interval:
+                self.add_error(None, 'Plot interval is larger than maximum allowed {} hours'.format(settings.MAX_PLOT_INTERVAL // timedelta(hours=1)))
+
         self.cleaned_data['date_from'], self.cleaned_data['date_to'] = date_from, date_to
 
