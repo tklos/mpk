@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import sys
+from datetime import timedelta
 
 import pytz
 
@@ -142,6 +143,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, '../public/media/')
 
 # Timezone
 LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
+
+
+# Max interval
+MAX_PLOT_INTERVAL = timedelta(hours=72)
 
 
 # Routes and stops
