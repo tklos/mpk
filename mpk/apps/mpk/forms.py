@@ -93,7 +93,11 @@ class ProcessForm(forms.Form):
         date_from, date_to = self.cleaned_data.get('date_from'), self.cleaned_data.get('date_to')
         if date_from is not None and date_to is not None:
             if isinstance(date_from, timedelta):
-                date_from = date_to - date_from
+                try:
+                    date_from = date_to - date_from
+                except Exception as exc:
+                    raise ValidationError('Can\'t create date-from: {}'.format(exc))
+
                 if self.date_to_is_now:
                     date_from -= timedelta(minutes=1)
 
