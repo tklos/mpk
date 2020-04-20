@@ -1,6 +1,4 @@
 import math
-import os
-import sys
 from datetime import datetime
 
 import matplotlib
@@ -14,8 +12,7 @@ from matplotlib.collections import LineCollection
 
 from routes.models import Route
 
-sys.path.insert(0, os.path.dirname(__file__))
-from lib import settings
+from .lib import settings
 
 
 def _epoch_to_datetime(sec):
