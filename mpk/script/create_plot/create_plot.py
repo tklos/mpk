@@ -2,17 +2,18 @@ import math
 from datetime import datetime
 
 import matplotlib
-matplotlib.use('Agg')
-
 import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
 import pytz
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
+from matplotlib.figure import Figure
 
 from routes.models import Route
 
 from .lib import settings
+
+
+matplotlib.use('Agg')
 
 
 def _epoch_to_datetime(sec):
@@ -196,24 +197,26 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Plot
     # Figure
-    figure_h = plt.figure(figsize=params.window_size_i, dpi=params.dpi)
+    figure_h = Figure(figsize=params.window_size_i, dpi=params.dpi)
 
-    full_window_h = plt.axes([0., 0., 1., 1.], zorder=-20)
+    full_window_h = figure_h.add_axes([0., 0., 1., 1.], zorder=-20)
     full_window_h.set_axis_off()
 
-    canvas_h = plt.axes((params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n), zorder=-20)
+    canvas_h = figure_h.add_axes((params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n), zorder=-20)
 
     # X axis
-    plt.xlim(xlim)
-    plt.xticks(xticks, xticklabels, fontsize=params.bottom_fontsize)
+    canvas_h.set_xlim(xlim)
+    canvas_h.set_xticks(xticks)
+    canvas_h.set_xticklabels(xticklabels, fontsize=params.bottom_fontsize)
     for xtick in xticks:
-        plt.axvline(xtick, c='k', ls=':', lw=0.5)
+        canvas_h.axvline(xtick, c='k', ls=':', lw=0.5)
 
     # Y axis
-    plt.yticks(range(num_stops), [stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
-    plt.ylim(ylim)
+    canvas_h.set_yticks(range(num_stops))
+    canvas_h.set_yticklabels([stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
+    canvas_h.set_ylim(ylim)
     for stop_ind in range(len(stops)):
-        plt.axhline(stop_ind, c='k', ls=':', lw=0.5)
+        canvas_h.axhline(stop_ind, c='k', ls=':', lw=0.5)
 
     # Plot data
     for data_type in ['data', 'gap-data', 'invalid-data']:
@@ -231,14 +234,12 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
             no_data_msg = 'No data collected so far for line {}'.format(line_no)
         else:
             no_data_msg = 'The earliest data available for line {}\nis at {}'.format(line_no, earliest_data.date.astimezone(timezone_local).strftime('%Y-%m-%d %H:%M'))
-        plt.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
+        canvas_h.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
 
     # Title
     title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no.upper())
     full_window_h.text(.5, params.title_top_margin_n, title_str, fontsize=params.title_fontsize, va='top', ha='center')
 
     # Plot figure
-    plt.savefig(out_filename, dpi=params.dpi)
-
-    plt.close(figure_h)
+    figure_h.savefig(out_filename, dpi=params.dpi)
 
