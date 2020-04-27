@@ -6,7 +6,7 @@ from . import const
 
 
 class VehicleLocation(models.Model):
-    route = models.ForeignKey(Route, on_delete=models.CASCADE)
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, db_index=False)
     vehicle_id = models.IntegerField()
     date = models.DateTimeField()
     date_added = models.DateTimeField(auto_now_add=True)
@@ -15,7 +15,7 @@ class VehicleLocation(models.Model):
     is_processed = models.BooleanField()
     unprocessed_reason = models.SmallIntegerField(choices=const.UNPROC_REASON_CHOICES, null=True, blank=True)
     is_at_stop = models.BooleanField(null=True, blank=True)
-    current_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, null=True, blank=True)
+    current_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, null=True, blank=True, db_index=False)
     to_next_stop_ratio = models.FloatField(null=True, blank=True)
 
     class Meta:
