@@ -23,8 +23,7 @@ class VehicleLocation(models.Model):
             ['route', 'vehicle_id', 'date'],
         ]
         indexes = [
-            # models.Index(fields=['route', 'vehicle_id', 'date']),
-            models.Index(fields=['is_processed']),
+            models.Index(fields=['route', 'date']),
         ]
         ordering = [
             'route',
