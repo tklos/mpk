@@ -171,13 +171,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     data = _process_vehicle_locations(locations, num_stops, params)
 
     # No locations
-    is_request_too_early, earliest_data = False, None
-    if not any([data['data'], data['gap-data'], data['invalid-data']]):
-        earliest_data = route.vehiclelocation_set \
-                .order_by('date') \
-                .first()
-        if earliest_data is None or date_to_local < earliest_data.date:
-            is_request_too_early = True
+    any_data_to_display = any([data['data'], data['gap-data'], data['invalid-data']])
 
     # Vehicle directions
     vehicle_directions = {}
@@ -228,12 +222,24 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         line_h = LineCollection(line_data, colors=colours, ls=this_line_params['ls'], zorder=this_line_params['zorder'])
         canvas_h.add_collection(line_h, autolim=False)
 
-    # Print message if request too early
-    if is_request_too_early:
+    # No data to display
+    if not any_data_to_display:
+        earliest_data = route.vehiclelocation_set \
+                .order_by('date') \
+                .first()
+        latest_data = route.vehiclelocation_set \
+                .order_by('-date') \
+                .first()
+
         if not earliest_data:
             no_data_msg = 'No data collected so far for line {}'.format(line_no)
-        else:
+        elif date_to_local < earliest_data.date:
             no_data_msg = 'The earliest data available for line {}\nis at {}'.format(line_no, earliest_data.date.astimezone(timezone_local).strftime('%Y-%m-%d %H:%M'))
+        elif latest_data.date < date_to_local:
+            no_data_msg = 'The latest data available for line {}\nis at {}'.format(line_no, latest_data.date.astimezone(timezone_local).strftime('%Y-%m-%d %H:%M'))
+        else:
+            no_data_msg = 'No data for this plot'
+
         canvas_h.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
 
     # Title

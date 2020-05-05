@@ -4,7 +4,7 @@ from routes.models import Route
 
 
 class Stop(models.Model):
-    route = models.ForeignKey(Route, on_delete=models.CASCADE)
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, db_index=False)
     route_index = models.IntegerField()
     name = models.CharField(max_length=50)
     display_name = models.CharField(max_length=50)
