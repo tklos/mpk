@@ -1,10 +1,12 @@
 import logging
+import re
 from datetime import datetime
 import numpy as np
 import pytz
 import requests
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db import IntegrityError
 
 from lib import distance
 from routes.models import Route
@@ -160,6 +162,14 @@ def process_vehicle(el, routes_d, date_created):
         logger.debug(loc)
         logger.debug('')
 
+    except IntegrityError as exc:
+        # Duplicate key
+        match = re.search('Key \(route_id, vehicle_id, date\)=.* already exists', str(exc))
+        if not match:
+            raise
+
+        logger.error('Duplicate key: {}'.format(match.string[match.start():match.end()]))
+
     except Exception as exc:
         logger.exception(exc)
 
@@ -174,13 +184,19 @@ class Command(BaseCommand):
             raise RuntimeError('No routes')
         routes_d = {r.line: (r, list(r.stop_set.all())) for r in routes}
 
-        # Get data
+        # Send request
         locations_data = {'busList[][]': lines_l}
         resp = requests.post(LOCATIONS_URL, data=locations_data)
         resp.raise_for_status()
 
-        date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
+        # Check if response is empty
+        if not len(resp.content):
+            logger.error('Response empty, exiting..')
+            return
+
+        # Get data
         data = resp.json()
+        date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
 
         # There might be duplicate vehicle ids in the data,
         # e.g. {'name': '3', 'type': 'tram', 'y': 16.98013, 'x': 51.12673, 'k': 14339663} and {'name': '3', 'type': 'tram', 'y': 17.03928, 'x': 51.107746, 'k': 14339663}
