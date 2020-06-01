@@ -174,13 +174,19 @@ class Command(BaseCommand):
             raise RuntimeError('No routes')
         routes_d = {r.line: (r, list(r.stop_set.all())) for r in routes}
 
-        # Get data
+        # Send request
         locations_data = {'busList[][]': lines_l}
         resp = requests.post(LOCATIONS_URL, data=locations_data)
         resp.raise_for_status()
 
-        date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
+        # Check if response is empty
+        if not len(resp.content):
+            logger.error('Response empty, exiting..')
+            return
+
+        # Get data
         data = resp.json()
+        date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
 
         # There might be duplicate vehicle ids in the data,
         # e.g. {'name': '3', 'type': 'tram', 'y': 16.98013, 'x': 51.12673, 'k': 14339663} and {'name': '3', 'type': 'tram', 'y': 17.03928, 'x': 51.107746, 'k': 14339663}
