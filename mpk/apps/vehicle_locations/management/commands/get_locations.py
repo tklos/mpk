@@ -1,10 +1,12 @@
 import logging
+import re
 from datetime import datetime
 import numpy as np
 import pytz
 import requests
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db import IntegrityError
 
 from lib import distance
 from routes.models import Route
@@ -159,6 +161,14 @@ def process_vehicle(el, routes_d, date_created):
         )
         logger.debug(loc)
         logger.debug('')
+
+    except IntegrityError as exc:
+        # Duplicate key
+        match = re.search('Key \(route_id, vehicle_id, date\)=.* already exists', str(exc))
+        if not match:
+            raise
+
+        logger.error('Duplicate key: {}'.format(match.string[match.start():match.end()]))
 
     except Exception as exc:
         logger.exception(exc)
