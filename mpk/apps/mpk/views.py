@@ -1,7 +1,9 @@
 import logging
 import os
 import random
+import shlex
 import string
+import subprocess
 import time
 from datetime import datetime
 
@@ -91,19 +93,22 @@ class HomeView(FormView):
                 'next_plot_to': next_plot_to,
             })
 
+            # Mogrify
+            if settings.RUN_MOGRIFY:
+                cmd = f'mogrify -alpha off -colors 256 {plot_filename}'
+
+                logger.debug(f'Running mogrify {cmd}')
+                cmd_args = shlex.split(cmd)
+                ret = subprocess.call(cmd_args, close_fds=False)
+                if ret:
+                    raise RuntimeError(f'{cmd} returned {ret}')
+
             # Log processing time
             total_time = time.time() - self.start_time
             logger.info('Processing finished   {}; Total time {:.2f}s.'.format(
                 location_ext,
                 total_time,
             ))
-
-            # Mogrify
-            # cmd = 'mogrify -alpha off {}'.format(plot_filename)
-            # logger.debug('Running mogrify {}'.format(cmd))
-            # ret = os.system(cmd)
-            # if ret != 0:
-            #     raise RuntimeError('{} returned {}'.format(cmd, ret))
 
         except Exception as exc:
             context.update({

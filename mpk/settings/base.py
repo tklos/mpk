@@ -145,8 +145,10 @@ MEDIA_ROOT = os.path.abspath(os.path.join(BASE_DIR, '../public/media/'))
 LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
-# Max interval
+# Some settings
 MAX_PLOT_INTERVAL = timedelta(hours=72)
+
+# RUN_MOGRIFY = ... (env)
 
 
 # Routes and stops
