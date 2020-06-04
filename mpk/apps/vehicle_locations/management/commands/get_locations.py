@@ -56,7 +56,7 @@ def process_vehicle(el, routes_d, date_created):
     """ Calculates position of element el and saves in the db """
     line, vehicle_id = el['name'], el['k']
     lat, lng = el['x'], el['y']
-    logger.debug('Processing {}, {}'.format(lat, lng))
+    logger.debug(f'Processing {lat}, {lng}')
 
     loc = (lat, lng)
     route, stops = routes_d[line]
@@ -64,7 +64,7 @@ def process_vehicle(el, routes_d, date_created):
     # Check if location is valid
     # Example of incorrect coordinates: {'name': 'd', 'type': 'bus', 'y': 2634.2861, 'x': 6429.7183, 'k': 14429515}
     if not settings.MIN_LAT <= lat <= settings.MAX_LAT or not settings.MIN_LONG <= lng <= settings.MAX_LONG:
-        logger.error('Invalid location: {}'.format(el))
+        logger.error(f'Invalid location: {el}')
         return
 
     # Calculate distance
@@ -208,7 +208,7 @@ class Command(BaseCommand):
         # (b) Remove duplicates
         for vehicle_id in list(data_d.keys()):
             if len(data_d[vehicle_id]) != 1:
-                logger.error('Duplicate vehicle id {}: {}'.format(vehicle_id, data_d[vehicle_id]))
+                logger.error(f'Duplicate vehicle id {vehicle_id}: {data_d[vehicle_id]}')
                 del data_d[vehicle_id]
 
         # Save data

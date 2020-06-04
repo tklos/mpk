@@ -103,7 +103,7 @@ def _process_vehicle_locations(locations, num_stops, params):
                         # Break this vehicle data in two and don't plot line between the two parts
                         new_vehicle_id = str(vehicle_id)
                         while new_vehicle_id in data:
-                            new_vehicle_id = '{}_'.format(new_vehicle_id)
+                            new_vehicle_id = f'{new_vehicle_id}_'
 
                         data[new_vehicle_id] = data[vehicle_id]
                         data[vehicle_id] = [[]]
@@ -146,17 +146,20 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     try:
         route = Route.objects.get(line=line_no)
     except Route.DoesNotExist as exc:
-        raise ValueError('Line {} doesn\'t exist'.format(line_no)) from exc
+        raise ValueError(f'Line {line_no} doesn\'t exist') from exc
 
     # Stops
     stops = list(route.stop_set.all())
     num_stops = len(stops)
 
     # Vehicle locations
-    locations = route.vehiclelocation_set \
-            .select_related('current_stop') \
-            .filter(date__gte=date_from_local, date__lt=date_to_local) \
-            .order_by('vehicle_id', 'date')
+    locations = (
+        route
+        .vehiclelocation_set
+        .select_related('current_stop')
+        .filter(date__gte=date_from_local, date__lt=date_to_local)
+        .order_by('vehicle_id', 'date')
+    )
 
     ## Prepare
     # Settings
@@ -224,15 +227,21 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # No data to display
     if not any_data_to_display:
-        earliest_data = route.vehiclelocation_set \
-                .order_by('date') \
-                .first()
-        latest_data = route.vehiclelocation_set \
-                .order_by('-date') \
-                .first()
+        earliest_data = (
+            route
+            .vehiclelocation_set
+            .order_by('date')
+            .first()
+        )
+        latest_data = (
+            route
+            .vehiclelocation_set
+            .order_by('-date')
+            .first()
+        )
 
         if not earliest_data:
-            no_data_msg = 'No data collected so far for line {}'.format(line_no)
+            no_data_msg = f'No data collected so far for line {line_no}'
         elif date_to_local < earliest_data.date:
             no_data_msg = 'The earliest data available for line {}\nis at {}'.format(line_no, earliest_data.date.astimezone(timezone_local).strftime('%Y-%m-%d %H:%M'))
         elif latest_data.date < date_to_local:
@@ -243,7 +252,7 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         canvas_h.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
 
     # Title
-    title_str = 'MPK Wrocław stringline plot: line {}'.format(line_no.upper())
+    title_str = f'MPK Wrocław stringline plot: line {line_no.upper()}'
     full_window_h.text(.5, params.title_top_margin_n, title_str, fontsize=params.title_fontsize, va='top', ha='center')
 
     # Plot figure
