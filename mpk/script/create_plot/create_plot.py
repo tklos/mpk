@@ -153,10 +153,13 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
     num_stops = len(stops)
 
     # Vehicle locations
-    locations = route.vehiclelocation_set \
-            .select_related('current_stop') \
-            .filter(date__gte=date_from_local, date__lt=date_to_local) \
-            .order_by('vehicle_id', 'date')
+    locations = (
+        route
+        .vehiclelocation_set
+        .select_related('current_stop')
+        .filter(date__gte=date_from_local, date__lt=date_to_local)
+        .order_by('vehicle_id', 'date')
+    )
 
     ## Prepare
     # Settings
@@ -224,12 +227,18 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     # No data to display
     if not any_data_to_display:
-        earliest_data = route.vehiclelocation_set \
-                .order_by('date') \
-                .first()
-        latest_data = route.vehiclelocation_set \
-                .order_by('-date') \
-                .first()
+        earliest_data = (
+            route
+            .vehiclelocation_set
+            .order_by('date')
+            .first()
+        )
+        latest_data = (
+            route
+            .vehiclelocation_set
+            .order_by('-date')
+            .first()
+        )
 
         if not earliest_data:
             no_data_msg = f'No data collected so far for line {line_no}'

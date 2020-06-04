@@ -35,9 +35,12 @@ class Command(BaseCommand):
         last_date = current_date - timedelta(days=keep_days)
 
         # Earliest record
-        earliest_record = VehicleLocation.objects \
-                .order_by('date') \
-                .first()
+        earliest_record = (
+            VehicleLocation
+            .objects
+            .order_by('date')
+            .first()
+        )
         if earliest_record is None:
             return
 
