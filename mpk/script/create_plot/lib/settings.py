@@ -82,5 +82,5 @@ class Params:
 
         ## Check params
         if self.stops_margin_n >= .5:
-            raise RuntimeError('stops_margin_n too large: {}'.format(self.stops_margin_n))
+            raise RuntimeError(f'stops_margin_n too large: {self.stops_margin_n}')
 

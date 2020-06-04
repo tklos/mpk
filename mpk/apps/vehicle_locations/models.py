@@ -42,7 +42,7 @@ class VehicleLocation(models.Model):
         )
         if self.is_processed:
             if self.is_at_stop:
-                ret += 'at-stop {}'.format(self.current_stop.name)
+                ret += f'at-stop {self.current_stop.name}'
             else:
                 ret += 'between-stops {} {:.3f}'.format(self.current_stop.name, self.to_next_stop_ratio)
         else:

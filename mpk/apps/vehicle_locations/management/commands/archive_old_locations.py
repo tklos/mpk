@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
             # Make sure that the file has been created
             if not os.path.isfile(out_filename):
-                raise RuntimeError('Dump for {} failed; {} wasn\'t been created'.format(this_date, out_filename))
+                raise RuntimeError(f'Dump for {this_date} failed; {out_filename} hasn\'t been created')
 
             # Delete records
             VehicleLocation.objects.filter(date__lt=next_date_dt).order_by().delete()
