@@ -8,6 +8,8 @@ LOCAL_MEDIA_SERVE =
 ALLOWED_HOSTS = [
 ]
 
+RUN_MOGRIFY =
+
 
 # Logging
 LOGGING['handlers']['default']['filename'] =
