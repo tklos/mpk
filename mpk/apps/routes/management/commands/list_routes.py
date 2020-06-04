@@ -28,7 +28,7 @@ class Command(BaseCommand):
             print(route)
             if list_stops:
                 for stop in route.stop_set.all():
-                    print('    {}'.format(stop))
+                    print(f'    {stop}')
 
                 check_if_any_stops_overlap(route)
                 print('')

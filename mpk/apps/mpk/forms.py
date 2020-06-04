@@ -67,7 +67,7 @@ class ProcessForm(forms.Form):
                 date_from = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
 
         except Exception as exc:
-            raise ValidationError('Can\'t parse date: {}'.format(exc))
+            raise ValidationError(f'Can\'t parse date: {exc}')
 
         return date_from
 
@@ -82,7 +82,7 @@ class ProcessForm(forms.Form):
                 date_to = settings.LOCAL_TIMEZONE.localize(datetime.strptime(s, '%Y-%m-%d %H:%M'))
 
         except Exception as exc:
-            raise ValidationError('Can\'t parse date: {}'.format(exc))
+            raise ValidationError(f'Can\'t parse date: {exc}')
 
         return date_to
 
@@ -96,7 +96,7 @@ class ProcessForm(forms.Form):
                 try:
                     date_from = date_to - date_from
                 except Exception as exc:
-                    raise ValidationError('Can\'t create date-from: {}'.format(exc))
+                    raise ValidationError(f'Can\'t create date-from: {exc}')
 
                 if self.date_to_is_now:
                     date_from -= timedelta(minutes=1)

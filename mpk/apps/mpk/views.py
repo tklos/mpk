@@ -1,7 +1,9 @@
 import logging
 import os
 import random
+import shlex
 import string
+import subprocess
 import time
 from datetime import datetime
 
@@ -50,13 +52,10 @@ class HomeView(FormView):
         # Directory and filename
         location = ''.join(random.choices(string.ascii_letters, k=6))
         location_ext = '{}-{}'.format(current_time.strftime('%y%m%d-%H%M'), location)
-        out_dir = '{}/{}'.format(
-            settings.MEDIA_ROOT,
-            location_ext,
-        )
+        out_dir = f'{settings.MEDIA_ROOT}/{location_ext}'
         plot_fn = '{:0>3s}--{}--{}.png'.format(line_no, date_from.strftime('%y%m%d-%H%M'), date_to.strftime('%y%m%d-%H%M'))
-        plot_filename = '{}/{}'.format(out_dir, plot_fn)
-        django_plot_location = '{}/{}/{}'.format(settings.MEDIA_URL, location_ext, plot_fn)
+        plot_filename = f'{out_dir}/{plot_fn}'
+        django_plot_location = f'{settings.MEDIA_URL}/{location_ext}/{plot_fn}'
 
         # Process
         context = self.get_std_context_data()
@@ -67,8 +66,8 @@ class HomeView(FormView):
         })
 
         try:
-            logger.info('Running {} {} -- {} {}'.format(line_no, date_from, date_to, out_dir))
-            logger.debug('Creating out-dir {}'.format(out_dir))
+            logger.info(f'Running {line_no} {date_from} -- {date_to} {out_dir}')
+            logger.debug(f'Creating out-dir {out_dir}')
             os.makedirs(out_dir)
 
             # Create plot
@@ -91,19 +90,19 @@ class HomeView(FormView):
                 'next_plot_to': next_plot_to,
             })
 
+            # Mogrify
+            if settings.RUN_MOGRIFY:
+                cmd = f'mogrify -alpha off -colors 256 {plot_filename}'
+
+                logger.debug(f'Running mogrify {cmd}')
+                cmd_args = shlex.split(cmd)
+                ret = subprocess.call(cmd_args, close_fds=False)
+                if ret:
+                    raise RuntimeError(f'{cmd} returned {ret}')
+
             # Log processing time
             total_time = time.time() - self.start_time
-            logger.info('Processing finished   {}; Total time {:.2f}s.'.format(
-                location_ext,
-                total_time,
-            ))
-
-            # Mogrify
-            # cmd = 'mogrify -alpha off {}'.format(plot_filename)
-            # logger.debug('Running mogrify {}'.format(cmd))
-            # ret = os.system(cmd)
-            # if ret != 0:
-            #     raise RuntimeError('{} returned {}'.format(cmd, ret))
+            logger.info(f'Processing finished   {location_ext}; Total time {total_time:.2f}s.')
 
         except Exception as exc:
             context.update({

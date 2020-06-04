@@ -20,7 +20,7 @@ class ProcessVehicleTests(TestCase):
         num_stops = len(self.STOPS_DIST)
         prev_longitude = self.START_STOPS_LOC[1]
         for ind in range(num_stops):
-            name = 'Stop {}'.format(ind)
+            name = f'Stop {ind}'
             longitude = prev_longitude + self.STOPS_DIST[ind] / settings.ONE_DEG_X_KM / 1000.
 
             Stop.objects.create(

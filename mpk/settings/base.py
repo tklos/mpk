@@ -132,21 +132,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, '../public/static/')
+STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, '../public/static/'))
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, '../public/media/')
+MEDIA_ROOT = os.path.abspath(os.path.join(BASE_DIR, '../public/media/'))
 
 
 # Timezone
 LOCAL_TIMEZONE = pytz.timezone('Europe/Warsaw')
 
 
-# Max interval
+# Some settings
 MAX_PLOT_INTERVAL = timedelta(hours=72)
+
+# RUN_MOGRIFY = ... (env)
 
 
 # Routes and stops

@@ -1,10 +1,12 @@
 import logging
+import re
 from datetime import datetime
 import numpy as np
 import pytz
 import requests
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db import IntegrityError
 
 from lib import distance
 from routes.models import Route
@@ -54,7 +56,7 @@ def process_vehicle(el, routes_d, date_created):
     """ Calculates position of element el and saves in the db """
     line, vehicle_id = el['name'], el['k']
     lat, lng = el['x'], el['y']
-    logger.debug('Processing {}, {}'.format(lat, lng))
+    logger.debug(f'Processing {lat}, {lng}')
 
     loc = (lat, lng)
     route, stops = routes_d[line]
@@ -62,7 +64,7 @@ def process_vehicle(el, routes_d, date_created):
     # Check if location is valid
     # Example of incorrect coordinates: {'name': 'd', 'type': 'bus', 'y': 2634.2861, 'x': 6429.7183, 'k': 14429515}
     if not settings.MIN_LAT <= lat <= settings.MAX_LAT or not settings.MIN_LONG <= lng <= settings.MAX_LONG:
-        logger.error('Invalid location: {}'.format(el))
+        logger.error(f'Invalid location: {el}')
         return
 
     # Calculate distance
@@ -160,6 +162,14 @@ def process_vehicle(el, routes_d, date_created):
         logger.debug(loc)
         logger.debug('')
 
+    except IntegrityError as exc:
+        # Duplicate key
+        match = re.search('Key \(route_id, vehicle_id, date\)=.* already exists', str(exc))
+        if not match:
+            raise
+
+        logger.error('Duplicate key: {}'.format(match.string[match.start():match.end()]))
+
     except Exception as exc:
         logger.exception(exc)
 
@@ -174,13 +184,19 @@ class Command(BaseCommand):
             raise RuntimeError('No routes')
         routes_d = {r.line: (r, list(r.stop_set.all())) for r in routes}
 
-        # Get data
+        # Send request
         locations_data = {'busList[][]': lines_l}
         resp = requests.post(LOCATIONS_URL, data=locations_data)
         resp.raise_for_status()
 
-        date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
+        # Check if response is empty
+        if not len(resp.content):
+            logger.error('Response empty, exiting..')
+            return
+
+        # Get data
         data = resp.json()
+        date_created = datetime.strptime(resp.headers['Date'], '%a, %d %b %Y %H:%M:%S GMT').replace(tzinfo=pytz.utc)
 
         # There might be duplicate vehicle ids in the data,
         # e.g. {'name': '3', 'type': 'tram', 'y': 16.98013, 'x': 51.12673, 'k': 14339663} and {'name': '3', 'type': 'tram', 'y': 17.03928, 'x': 51.107746, 'k': 14339663}
@@ -192,7 +208,7 @@ class Command(BaseCommand):
         # (b) Remove duplicates
         for vehicle_id in list(data_d.keys()):
             if len(data_d[vehicle_id]) != 1:
-                logger.error('Duplicate vehicle id {}: {}'.format(vehicle_id, data_d[vehicle_id]))
+                logger.error(f'Duplicate vehicle id {vehicle_id}: {data_d[vehicle_id]}')
                 del data_d[vehicle_id]
 
         # Save data

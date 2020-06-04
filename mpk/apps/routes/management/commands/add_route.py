@@ -15,7 +15,7 @@ from routes.models import Route
 from stops.models import Stop
 
 
-DATA_DIR = '{}/resources'.format(settings.BASE_DIR)
+DATA_DIR = f'{settings.BASE_DIR}/resources'
 
 
 warnings.formatwarning = warn.format_warning
@@ -57,7 +57,7 @@ def read_route_file(filename):
     root = ET.parse(filename).getroot()
     route_versions = list(root.iter('wariant'))
     if len(route_versions) != 2:
-        raise ValueError('There have to be exactly two route versions; got {}'.format(len(route_versions)))
+        raise ValueError(f'There have to be exactly two route versions; got {len(route_versions)}')
 
     stops = [route_versions[dir_].find('przystanek').find('czasy').findall('przystanek') for dir_ in (0, 1)]
     stops[1] = list(reversed(stops[1]))
@@ -70,12 +70,12 @@ def read_route_file(filename):
         counter = Counter(stop_names[dir_])
         most_common = counter.most_common(1)[0]
         if most_common[1] > 1:
-            raise ValueError('Stop "{}" int the {} route appears more than once'.format(most_common[0], direction_names[dir_]))
+            raise ValueError('Stop "{}" in the {} route appears more than once'.format(most_common[0], direction_names[dir_]))
 
     # Check if stops are in the correct order
     for stop1, stop2 in zip(*stop_names):
         if stop1 != stop2:
-            raise ValueError('Stops not in reverse order; expected "{}" in the return route, got "{}"'.format(stop1, stop2))
+            raise ValueError(f'Stops not in reverse order; expected "{stop1}" in the return route, got "{stop2}"')
 
     if len(stop_names[0]) < len(stop_names[1]):
         raise ValueError('Unknown stop "{}" in the return route'.format(stop_names[1][len(stop_names[0])]))
@@ -163,8 +163,8 @@ class Command(BaseCommand):
                     route_id = max(max_route_id, settings.NOT_INT_ROUTE_MIN_ID) + 1
 
         # Files
-        stops_file = '{}/stops.csv'.format(DATA_DIR)
-        route_file = '{}/routes/{:>04}.xml'.format(DATA_DIR, line_no)
+        stops_file = f'{DATA_DIR}/stops.csv'
+        route_file = f'{DATA_DIR}/routes/{line_no:>04}.xml'
 
         # Read files
         stops_data = read_stops_file(stops_file)
@@ -179,7 +179,7 @@ class Command(BaseCommand):
                 id=None if no_route_id else route_id,
                 line=line_no,
             )
-            print('Added route {}'.format(route))
+            print(f'Added route {route}')
 
             for ind, stop in enumerate(route_stops_data):
                 stop = Stop.objects.create(
@@ -192,7 +192,7 @@ class Command(BaseCommand):
                     longitude=round(stop['location'][1], 6),
                     radius_m=math.ceil(stop['radius']),
                 )
-                print('Added stop {}'.format(stop))
+                print(f'Added stop {stop}')
 
         # Check if any two stops overlap
         check_if_any_stops_overlap(route)
