@@ -1,4 +1,9 @@
 
+ ** v1.0.0   05.05.2020
+    - Add more location errors
+    - Add optional mogrifying of the result plot
+
+
  ** v0.4.4   05.05.2020
     - Improve database indexes
     - Improve no data message
