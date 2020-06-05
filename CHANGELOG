@@ -1,5 +1,9 @@
 
- ** v1.0.0   05.05.2020
+ ** v1.0.1   04.06.2020
+    - Add license
+
+
+ ** v1.0.0   04.06.2020
     - Add more location errors
     - Add optional mogrifying of the result plot
 
