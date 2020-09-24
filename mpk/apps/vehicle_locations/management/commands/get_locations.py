@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 import pytz
 import requests
+import urllib3
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db import IntegrityError
@@ -14,10 +15,14 @@ from vehicle_locations import const
 from vehicle_locations.models import VehicleLocation
 
 
-LOCATIONS_URL = 'http://pasazer.mpk.wroc.pl/position.php'
+LOCATIONS_URL = 'https://mpk.wroc.pl/bus_position'
 
 
 logger = logging.getLogger('get-locations')
+
+
+# Suppress SSL warning
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def round_or_none(val, num_d):
@@ -186,7 +191,7 @@ class Command(BaseCommand):
 
         # Send request
         locations_data = {'busList[][]': lines_l}
-        resp = requests.post(LOCATIONS_URL, data=locations_data)
+        resp = requests.post(LOCATIONS_URL, data=locations_data, verify=False)
         resp.raise_for_status()
 
         # Check if response is empty
