@@ -7,7 +7,7 @@
 Miejskie Przedsiębiorstwo Komunikacyjne &mdash; the transportation company in Wrocław (<http://mpk.wroc.pl/>) provides positions of their buses and trams by querying their API endpoint, e.g.:
 
 ```bash
-$ curl http://pasazer.mpk.wroc.pl/position.php --data 'busList[][]=8&busList[][]=31'
+$ curl --insecure https://mpk.wroc.pl/bus_position --data 'busList[][]=8&busList[][]=31'
 [
     {"name":"31","type":"tram","y":17.01899,"x":51.09238,"k":14482003},
     {"name":"31","type":"tram","y":16.959703,"x":51.140003,"k":14481968},
