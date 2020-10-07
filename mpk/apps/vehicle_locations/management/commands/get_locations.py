@@ -191,8 +191,13 @@ class Command(BaseCommand):
 
         # Send request
         locations_data = {'busList[][]': lines_l}
-        resp = requests.post(LOCATIONS_URL, data=locations_data, verify=False)
-        resp.raise_for_status()
+        try:
+            resp = requests.post(LOCATIONS_URL, data=locations_data, verify=False)
+            resp.raise_for_status()
+        except Exception as exc:
+            msg = 'Error getting data, exiting..  {}.{}: {}'.format(type(exc).__module__, type(exc).__qualname__, str(exc))
+            logger.error(msg)
+            return
 
         # Check if response is empty
         if not len(resp.content):
