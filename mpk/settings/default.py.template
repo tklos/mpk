@@ -10,6 +10,8 @@ ALLOWED_HOSTS = [
 
 RUN_MOGRIFY =
 
+GET_LOCATIONS_TIMEOUT_S =
+
 
 # Logging
 LOGGING['handlers']['default']['filename'] =

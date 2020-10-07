@@ -189,8 +189,18 @@ class Command(BaseCommand):
         # Send request
         locations_data = {'busList[][]': lines_l}
         try:
-            resp = requests.post(LOCATIONS_URL, data=locations_data, verify=False)
+            resp = requests.post(
+                LOCATIONS_URL,
+                data=locations_data,
+                verify=False,
+                timeout=settings.GET_LOCATIONS_TIMEOUT_S,
+            )
             resp.raise_for_status()
+
+        except requests.exceptions.Timeout:
+            logger.error('Request timed out, exiting..')
+            return
+
         except Exception as exc:
             msg = 'Error getting data, exiting..  {}.{}: {}'.format(type(exc).__module__, type(exc).__qualname__, str(exc))
             logger.error(msg)

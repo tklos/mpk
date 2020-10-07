@@ -157,6 +157,8 @@ ROUTE_STOPS_STEP = 100
 
 
 ## Location consts
+# GET_LOCATIONS_TIMEOUT_S = ... (env)
+
 # Valid latitude and longitude ranges
 MIN_LAT, MAX_LAT = 51., 51.2
 MIN_LONG, MAX_LONG = 16.8, 17.2
