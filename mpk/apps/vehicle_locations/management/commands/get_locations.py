@@ -175,9 +175,6 @@ def process_vehicle(el, routes_d, date_created):
 
         logger.error('Duplicate key: {}'.format(match.string[match.start():match.end()]))
 
-    except Exception as exc:
-        logger.exception(exc)
-
 
 class Command(BaseCommand):
 
