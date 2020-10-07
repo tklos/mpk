@@ -175,9 +175,6 @@ def process_vehicle(el, routes_d, date_created):
 
         logger.error('Duplicate key: {}'.format(match.string[match.start():match.end()]))
 
-    except Exception as exc:
-        logger.exception(exc)
-
 
 class Command(BaseCommand):
 
@@ -191,8 +188,23 @@ class Command(BaseCommand):
 
         # Send request
         locations_data = {'busList[][]': lines_l}
-        resp = requests.post(LOCATIONS_URL, data=locations_data, verify=False)
-        resp.raise_for_status()
+        try:
+            resp = requests.post(
+                LOCATIONS_URL,
+                data=locations_data,
+                verify=False,
+                timeout=settings.GET_LOCATIONS_TIMEOUT_S,
+            )
+            resp.raise_for_status()
+
+        except requests.exceptions.Timeout:
+            logger.error('Request timed out, exiting..')
+            return
+
+        except Exception as exc:
+            msg = 'Error getting data, exiting..  {}.{}: {}'.format(type(exc).__module__, type(exc).__qualname__, str(exc))
+            logger.error(msg)
+            return
 
         # Check if response is empty
         if not len(resp.content):
