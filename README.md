@@ -43,7 +43,7 @@ provided by a Django app, also on <https://mpk.tk.usermd.net/>.
 
  * Install liberation fonts from <https://github.com/liberationfonts/liberation-fonts>
  * Clone the repository
- * Create virtual environment
+ * Create a Python>=3.8 virtual environment
  * Create `wsgi.py`, `manage.py` and files in `mpk/settings/` based on their `.template` versions
  * Update crontab based on `MANAGEMENT/0-crontab`
  * Add routes as described in the following section
