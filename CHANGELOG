@@ -1,4 +1,8 @@
 
+ ** v1.0.4   13.01.2020
+    - Upgrade to Python 3.8
+
+
  ** v1.0.3   13.10.2020
     - Handle requests exceptions
 
