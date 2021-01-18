@@ -1,10 +1,7 @@
 import math
 from datetime import datetime
 
-import matplotlib
-import matplotlib.dates as mdates
 import pytz
-from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.figure import Figure
 
@@ -13,11 +10,30 @@ from routes.models import Route
 from .lib import settings
 
 
-matplotlib.use('Agg')
+# Some global settings
+params = settings.Params()
+settings.set_mpl_settings()
+
+
+_MPL_EPOCH_PLUS_DAY = datetime(1, 1, 1, tzinfo=pytz.utc)
 
 
 def _epoch_to_datetime(sec):
     return datetime.fromtimestamp(sec)
+
+
+def _datetime_to_num(d):
+    """ Convert datetime to matplotlib's internal datetime representation
+
+    This is ~50 times faster than matplotlib.dates.date2num.
+
+    It also seems to be (slightly) faster than a more obvious implementation:
+    _MPL_EPOCH = datetime(1, 1, 1, tzinfo=pytz.utc).timestamp() - 86400.
+    return (d.timestamp() - _MPL_EPOCH) / 86400.
+
+    Note: matplotlib 3.3.0 changed its epoch from 0000-12-31 to 1970-01-01.
+    """
+    return (d - _MPL_EPOCH_PLUS_DAY).total_seconds() / 86400. + 1.
 
 
 def _calculate_xticks_and_labels(date_from_local, date_to_local, params):
@@ -63,7 +79,7 @@ def _process_vehicle_locations(locations, num_stops, params):
     data, gap_data, invalid_data = {}, {}, {}
     prev_vehicle_id, prev_point, num_unprocessed_in_a_row = None, None, 0
     for loc in locations:
-        date_ = mdates.date2num(loc.date)
+        date_ = _datetime_to_num(loc.date)
         vehicle_id = loc.vehicle_id
 
         if loc.is_processed:
@@ -161,14 +177,6 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         .order_by('vehicle_id', 'date')
     )
 
-    ## Prepare
-    # Settings
-    params = settings.Params()
-
-    rcParams.update({
-        'font.sans-serif': ['Liberation Sans'],
-    })
-
     ## Process data
     # Vehicle locations
     data = _process_vehicle_locations(locations, num_stops, params)
@@ -194,26 +202,52 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Plot
     # Figure
-    figure_h = Figure(figsize=params.window_size_i, dpi=params.dpi)
+    figure_h = Figure(
+        figsize=params.window_size_i,
+        dpi=params.dpi,
+    )
 
-    full_window_h = figure_h.add_axes([0., 0., 1., 1.], zorder=-20)
+    full_window_h = figure_h.add_axes(
+        [0., 0., 1., 1.],
+        zorder=-20,
+    )
     full_window_h.set_axis_off()
 
-    canvas_h = figure_h.add_axes((params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n), zorder=-20)
+    canvas_h = figure_h.add_axes(
+        (params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n),
+        zorder=-20,
+    )
 
     # X axis
     canvas_h.set_xlim(xlim)
     canvas_h.set_xticks(xticks)
-    canvas_h.set_xticklabels(xticklabels, fontsize=params.bottom_fontsize)
+    canvas_h.set_xticklabels(
+        xticklabels,
+        fontsize=params.bottom_fontsize,
+    )
     for xtick in xticks:
-        canvas_h.axvline(xtick, c='k', ls=':', lw=0.5)
+        canvas_h.axvline(
+            xtick,
+            color='k',
+            ls=':',
+            lw=0.5,
+        )
 
     # Y axis
     canvas_h.set_yticks(range(num_stops))
-    canvas_h.set_yticklabels([stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
+    canvas_h.set_yticklabels(
+        [stop.display_name for stop in stops],
+        fontsize=params.left_fontsize,
+        linespacing=1.,
+    )
     canvas_h.set_ylim(ylim)
     for stop_ind in range(len(stops)):
-        canvas_h.axhline(stop_ind, c='k', ls=':', lw=0.5)
+        canvas_h.axhline(
+            stop_ind,
+            color='k',
+            ls=':',
+            lw=0.5,
+        )
 
     # Plot data
     for data_type in ['data', 'gap-data', 'invalid-data']:
@@ -222,7 +256,12 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         for veh_id, d in data[data_type].items():
             line_data.extend(d)
             colours.extend([params.line_colours[vehicle_directions[veh_id]]] * len(d))
-        line_h = LineCollection(line_data, colors=colours, ls=this_line_params['ls'], zorder=this_line_params['zorder'])
+        line_h = LineCollection(
+            line_data,
+            colors=colours,
+            ls=this_line_params['ls'],
+            zorder=this_line_params['zorder'],
+        )
         canvas_h.add_collection(line_h, autolim=False)
 
     # No data to display
@@ -249,11 +288,26 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         else:
             no_data_msg = 'No data for this plot'
 
-        canvas_h.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
+        canvas_h.text(
+            .5,
+            .5,
+            no_data_msg,
+            fontsize=params.no_data_fontsize,
+            ha='center',
+            va='center',
+            transform=canvas_h.transAxes,
+        )
 
     # Title
     title_str = f'MPK Wrocław stringline plot: line {line_no.upper()}'
-    full_window_h.text(.5, params.title_top_margin_n, title_str, fontsize=params.title_fontsize, va='top', ha='center')
+    full_window_h.text(
+        .5,
+        params.title_top_margin_n,
+        title_str,
+        fontsize=params.title_fontsize,
+        va='top',
+        ha='center',
+    )
 
     # Plot figure
     figure_h.savefig(out_filename, dpi=params.dpi)
