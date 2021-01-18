@@ -202,26 +202,52 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
 
     ## Plot
     # Figure
-    figure_h = Figure(figsize=params.window_size_i, dpi=params.dpi)
+    figure_h = Figure(
+        figsize=params.window_size_i,
+        dpi=params.dpi,
+    )
 
-    full_window_h = figure_h.add_axes([0., 0., 1., 1.], zorder=-20)
+    full_window_h = figure_h.add_axes(
+        [0., 0., 1., 1.],
+        zorder=-20,
+    )
     full_window_h.set_axis_off()
 
-    canvas_h = figure_h.add_axes((params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n), zorder=-20)
+    canvas_h = figure_h.add_axes(
+        (params.canvas_left_edge_n, params.canvas_bottom_edge_n, params.canvas_width_n, params.canvas_height_n),
+        zorder=-20,
+    )
 
     # X axis
     canvas_h.set_xlim(xlim)
     canvas_h.set_xticks(xticks)
-    canvas_h.set_xticklabels(xticklabels, fontsize=params.bottom_fontsize)
+    canvas_h.set_xticklabels(
+        xticklabels,
+        fontsize=params.bottom_fontsize,
+    )
     for xtick in xticks:
-        canvas_h.axvline(xtick, c='k', ls=':', lw=0.5)
+        canvas_h.axvline(
+            xtick,
+            color='k',
+            ls=':',
+            lw=0.5,
+        )
 
     # Y axis
     canvas_h.set_yticks(range(num_stops))
-    canvas_h.set_yticklabels([stop.display_name for stop in stops], fontsize=params.left_fontsize, linespacing=1.)
+    canvas_h.set_yticklabels(
+        [stop.display_name for stop in stops],
+        fontsize=params.left_fontsize,
+        linespacing=1.,
+    )
     canvas_h.set_ylim(ylim)
     for stop_ind in range(len(stops)):
-        canvas_h.axhline(stop_ind, c='k', ls=':', lw=0.5)
+        canvas_h.axhline(
+            stop_ind,
+            color='k',
+            ls=':',
+            lw=0.5,
+        )
 
     # Plot data
     for data_type in ['data', 'gap-data', 'invalid-data']:
@@ -230,7 +256,12 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         for veh_id, d in data[data_type].items():
             line_data.extend(d)
             colours.extend([params.line_colours[vehicle_directions[veh_id]]] * len(d))
-        line_h = LineCollection(line_data, colors=colours, ls=this_line_params['ls'], zorder=this_line_params['zorder'])
+        line_h = LineCollection(
+            line_data,
+            colors=colours,
+            ls=this_line_params['ls'],
+            zorder=this_line_params['zorder'],
+        )
         canvas_h.add_collection(line_h, autolim=False)
 
     # No data to display
@@ -257,11 +288,26 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         else:
             no_data_msg = 'No data for this plot'
 
-        canvas_h.text(.5, .5, no_data_msg, fontsize=params.no_data_fontsize, ha='center', va='center', transform=canvas_h.transAxes)
+        canvas_h.text(
+            .5,
+            .5,
+            no_data_msg,
+            fontsize=params.no_data_fontsize,
+            ha='center',
+            va='center',
+            transform=canvas_h.transAxes,
+        )
 
     # Title
     title_str = f'MPK Wrocław stringline plot: line {line_no.upper()}'
-    full_window_h.text(.5, params.title_top_margin_n, title_str, fontsize=params.title_fontsize, va='top', ha='center')
+    full_window_h.text(
+        .5,
+        params.title_top_margin_n,
+        title_str,
+        fontsize=params.title_fontsize,
+        va='top',
+        ha='center',
+    )
 
     # Plot figure
     figure_h.savefig(out_filename, dpi=params.dpi)
