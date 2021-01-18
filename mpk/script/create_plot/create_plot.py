@@ -2,7 +2,6 @@ import math
 from datetime import datetime
 
 import matplotlib
-import matplotlib.dates as mdates
 import pytz
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
@@ -16,8 +15,25 @@ from .lib import settings
 matplotlib.use('Agg')
 
 
+_MPL_EPOCH_PLUS_DAY = datetime(1, 1, 1, tzinfo=pytz.utc)
+
+
 def _epoch_to_datetime(sec):
     return datetime.fromtimestamp(sec)
+
+
+def _datetime_to_num(d):
+    """ Convert datetime to matplotlib's internal datetime representation
+
+    This is ~50 times faster than matplotlib.dates.date2num.
+
+    It also seems to be (slightly) faster than a more obvious implementation:
+    _MPL_EPOCH = datetime(1, 1, 1, tzinfo=pytz.utc).timestamp() - 86400.
+    return (d.timestamp() - _MPL_EPOCH) / 86400.
+
+    Note: matplotlib 3.3.0 changed its epoch from 0000-12-31 to 1970-01-01.
+    """
+    return (d - _MPL_EPOCH_PLUS_DAY).total_seconds() / 86400. + 1.
 
 
 def _calculate_xticks_and_labels(date_from_local, date_to_local, params):
@@ -63,7 +79,7 @@ def _process_vehicle_locations(locations, num_stops, params):
     data, gap_data, invalid_data = {}, {}, {}
     prev_vehicle_id, prev_point, num_unprocessed_in_a_row = None, None, 0
     for loc in locations:
-        date_ = mdates.date2num(loc.date)
+        date_ = _datetime_to_num(loc.date)
         vehicle_id = loc.vehicle_id
 
         if loc.is_processed:
