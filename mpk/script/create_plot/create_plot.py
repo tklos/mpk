@@ -1,9 +1,7 @@
 import math
 from datetime import datetime
 
-import matplotlib
 import pytz
-from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.figure import Figure
 
@@ -12,7 +10,9 @@ from routes.models import Route
 from .lib import settings
 
 
-matplotlib.use('Agg')
+# Some global settings
+params = settings.Params()
+settings.set_mpl_settings()
 
 
 _MPL_EPOCH_PLUS_DAY = datetime(1, 1, 1, tzinfo=pytz.utc)
@@ -176,14 +176,6 @@ def create_plot(line_no, date_from_local, date_to_local, out_filename):
         .filter(date__gte=date_from_local, date__lt=date_to_local)
         .order_by('vehicle_id', 'date')
     )
-
-    ## Prepare
-    # Settings
-    params = settings.Params()
-
-    rcParams.update({
-        'font.sans-serif': ['Liberation Sans'],
-    })
 
     ## Process data
     # Vehicle locations

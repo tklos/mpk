@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+import matplotlib as mpl
+
 
 class Params:
 
@@ -83,4 +85,11 @@ class Params:
         ## Check params
         if self.stops_margin_n >= .5:
             raise RuntimeError(f'stops_margin_n too large: {self.stops_margin_n}')
+
+
+def set_mpl_settings():
+    mpl.use('Agg')
+    mpl.rcParams.update({
+        'font.sans-serif': ['Liberation Sans'],
+    })
 
